@@ -13,6 +13,8 @@ root.minsize(1200, 800)
 tablesFrame = Frame(root, width=120)
 rowsFrame = Frame(root, width=400)
 top_container = Frame(root,width=800)
+
+#Top container
 buttonsFrame = Frame(top_container, width=400)
 error_frame= Frame(top_container,width=200)
 
