@@ -36,18 +36,16 @@ m = backend.sqlManager('./chinook.db')
 class treeviewTable:
 	@staticmethod
 	def initTablesTree():
-		"""Initialize rows tree.
-
+		"""Initializes rows tree.
 		Returns:
 			Treeview: The initialize tables tree.
 		"""
-		tablesTree.tag_configure('exists', background='cyan', foreground='black')
-		tablesTree.tag_configure('deleted', background='#D8D8D8', foreground='#8A8A8A')
-		tablesTree.pack(side='top', fill=BOTH)
+		tablesTree.tag_configure('exists', foreground='black')
+		tablesTree.tag_configure('deleted', foreground='#ff0000')
+		tablesTree.pack(side='bottom', fill=BOTH)
 		tablesTree.heading('Tables', text="Tables")
 		tablesTree.column('Tables', width=100)
-		tablesTree.bind('<ButtonRelease-1>',
-						lambda e: selectTable())  # used to give e
+		tablesTree.bind('<ButtonRelease-1>',lambda e: selectTable())
 		fillTablesTree()
 		return tablesTree
 
@@ -116,7 +114,7 @@ def fixed_map(style, option):
 	return [elm for elm in style.map("Treeview", query_opt=option) if elm[:2] != ("!disabled", "!selected")]
 
 def selectTable():
-	"""Select a table when pressed in the tables' names tree
+	"""Selects and shows the table that pressed from the tables list.
 	"""
 	global selectedTable, selectedCell, selectedTableIndex, selectedRowIdentifier
 	selectedCell = None
@@ -127,11 +125,11 @@ def selectTable():
 	if curItem:
 		selectedTable = curItem[0]
 		populateRowsTable(curItem[0])
-		rowsTreeLabel.config(text=selectedTable)
+		rowsTreeLabel.config(text=f'{selectedTable.capitalize()} Table',font=("Arial", 18))
 	elif selectedTable:
 		curItem = selectedTable
 		populateRowsTable(curItem)
-		rowsTreeLabel.config(text=selectedTable)
+		rowsTreeLabel.config(text=f'{selectedTable.capitalize()} Table',font=("Arial", 18))
 	else:
 		populateRowsTable('')
 		rowsTreeLabel.config(text='')
@@ -289,7 +287,7 @@ def deleteRow():
 def createInputRowWindow():
 	"""Create an input window in order to collect information to add a new row to the current table.
 	"""
-	if selectedTable != None:
+	if selectedTable is not None:
 		columns = m.getTableColumns(selectedTable)
 		if len(columns) > 0:
 			w = Toplevel(root)
