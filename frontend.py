@@ -4,22 +4,26 @@ from tkinter import messagebox
 import sqlite3
 import tkinter
 import backend
+import constants
 
 root = Tk()
 
 root.minsize(1200, 800)
 
 tablesFrame = Frame(root, width=120)
-buttonsFrame = Frame(root, width=400)
 rowsFrame = Frame(root, width=400)
+top_container = Frame(root,width=800)
+buttonsFrame = Frame(top_container, width=400)
+error_frame= Frame(top_container,width=200)
 
 tablesTree = ttk.Treeview(tablesFrame, columns='Tables', height=20, show="headings")
 
 rowsTreeLabel = Label(rowsFrame)
 rowsTree = ttk.Treeview(rowsFrame, height=20, selectmode='browse')
 
-errorLabel = Label(root)
-errorLabel.pack(side='bottom', anchor='sw')
+errorLabel = Label(error_frame,font=("Arial", 15))
+errorLabel.pack(side='top', anchor=CENTER)
+
 
 
 selectedTable = None
@@ -32,18 +36,16 @@ m = backend.sqlManager('./chinook.db')
 class treeviewTable:
 	@staticmethod
 	def initTablesTree():
-		"""Initialize rows tree.
-
+		"""Initializes rows tree.
 		Returns:
 			Treeview: The initialize tables tree.
 		"""
-		tablesTree.tag_configure('exists', background='cyan', foreground='black')
-		tablesTree.tag_configure('deleted', background='#D8D8D8', foreground='#8A8A8A')
-		tablesTree.pack(side='top', fill=BOTH)
+		tablesTree.tag_configure('exists', foreground='black')
+		tablesTree.tag_configure('deleted', foreground='#ff0000')
+		tablesTree.pack(side='bottom', fill=BOTH)
 		tablesTree.heading('Tables', text="Tables")
 		tablesTree.column('Tables', width=100)
-		tablesTree.bind('<ButtonRelease-1>',
-						lambda e: selectTable())  # used to give e
+		tablesTree.bind('<ButtonRelease-1>',lambda e: selectTable())
 		fillTablesTree()
 		return tablesTree
 
@@ -76,25 +78,24 @@ class treeviewTable:
 		return rowsTree
 
 class btn():
-	def __init__(self, text, command, frame=root, side='bottom', pady=0) -> None:
+	def __init__(self, text, command, i, frame=root) -> None:
 		"""Initialize a button object
 
 		Args:
 			text (str): [description]
 			command (str): [description]
 			frame (str, optional): [description]. Defaults to root.
-			side (str, optional): [description]. Defaults to 'top'.
+			side (str, optional): [description]. Defaults to 'top
 			pady (int, optional): [description]. Defaults to 0.
 		"""
 		self.button = ttk.Button(frame, text=text, command=command)
-
-		self.button.pack(side=side, fill='x', pady=pady)
+		self.button.grid(row=1,column=i, padx=constants.BUTTON_PADX,ipady=3, ipadx=20)
 
 def errorMessage(func):
-	"""A decorator that encloses a function with try, except. the except makes the error label print a message.
+	"""Decorator for functins clicks.
 
-	Args:
-		func (function): the function we're decorating
+		Args:
+			func (function): the function we're decorating
 	"""
 
 	def inner(*args, **kwargs):
@@ -113,7 +114,7 @@ def fixed_map(style, option):
 	return [elm for elm in style.map("Treeview", query_opt=option) if elm[:2] != ("!disabled", "!selected")]
 
 def selectTable():
-	"""Select a table when pressed in the tables' names tree
+	"""Selects and shows the table that pressed from the tables list.
 	"""
 	global selectedTable, selectedCell, selectedTableIndex, selectedRowIdentifier
 	selectedCell = None
@@ -124,11 +125,11 @@ def selectTable():
 	if curItem:
 		selectedTable = curItem[0]
 		populateRowsTable(curItem[0])
-		rowsTreeLabel.config(text=selectedTable)
+		rowsTreeLabel.config(text=f'{selectedTable.capitalize()} Table',font=("Arial", 18))
 	elif selectedTable:
 		curItem = selectedTable
 		populateRowsTable(curItem)
-		rowsTreeLabel.config(text=selectedTable)
+		rowsTreeLabel.config(text=f'{selectedTable.capitalize()} Table',font=("Arial", 18))
 	else:
 		populateRowsTable('')
 		rowsTreeLabel.config(text='')
@@ -164,7 +165,10 @@ def initWindowAndConnection():
 			  background=fixed_map(style, "background"))
 
 	tablesFrame.pack(side='left', padx=5, fill=BOTH, expand=False)
-	buttonsFrame.pack(side='top', padx=5, fill=BOTH, expand=False,anchor=CENTER)
+	top_container.pack(side='top', padx=5,pady=10, fill=BOTH, expand=False,anchor=CENTER)
+
+	buttonsFrame.pack(side='left', padx=5,pady=10, fill=BOTH, expand=False)
+	error_frame.pack(side='right', padx=5,pady=10, fill=BOTH, expand=False)
 	rowsFrame.pack(side='top', padx=5, fill=BOTH, expand=True)
 
 
@@ -223,7 +227,7 @@ def createDB():
 	"""
 	m.createDatabaseFromCSV()
 	refreshTrees()
-	errorLabel.config(text="Created Database From CSV Files Successfully")
+	errorLabel.config(text="Created Database From CSV Files Successfully",fg='#20B519')
 
 def clearDb():
 	"""Drops Database
@@ -240,9 +244,9 @@ def createFocusedTable():
 	if selectedTable:
 		m.createTable(selectedTable)
 		refreshTrees()
-		errorLabel.config(text="Created Table Successfully")
+		errorLabel.config(text="Created Table Successfully",fg='#20B519')
 	else:
-		errorLabel.config(text="No Table Was Selected.")
+		errorLabel.config(text="No Table Was Selected.",fg='#D93232')
 
 def dropTable():
 	"""Drop the current table
@@ -251,9 +255,9 @@ def dropTable():
 	if selectedTable:
 		m.dropTable(selectedTable)
 		refreshTrees()
-		errorLabel.config(text="Dropped Table Successfully")
+		errorLabel.config(text="Dropped Table Successfully",fg='#20B519')
 	else:
-		errorLabel.config(text="No Table Was Selected.")
+		errorLabel.config(text="No Table Was Selected.",fg='#D93232')
 
 def refreshTrees():
 	"""Refresh and reshow all tables in the gui based on real time information.
@@ -275,15 +279,15 @@ def deleteRow():
 			cond = [selectedRowIdentifier[1], selectedRowIdentifier[3]]
 		m.deleteRowFromTable(selectedTable, cond)
 		refreshTrees()
-		errorLabel.config(text="Deleted Row Successfully")
+		errorLabel.config(text="Deleted Row Successfully",fg='#20B519')
 	else:
-		errorLabel.config(text="No Table/Cell Was Selected.")
+		errorLabel.config(text="No Table/Cell Was Selected.",fg='#D93232')
 
 @errorMessage
 def createInputRowWindow():
 	"""Create an input window in order to collect information to add a new row to the current table.
 	"""
-	if selectedTable != None:
+	if selectedTable is not None:
 		columns = m.getTableColumns(selectedTable)
 		if len(columns) > 0:
 			w = Toplevel(root)
@@ -306,12 +310,11 @@ def createInputRowWindow():
 				e = Entry(addRowFrame)
 				e.grid(row=row + 1, column=i % 2, stick=W, padx=2)
 				entries[c] = e.get
-			btn("Insert new row", lambda: addRowToTable(
-				entries, w), frame=w, side='bottom')
+			btn("Insert new row", lambda: addRowToTable(entries, w), frame=w, side='bottom')
 		else:
-			errorLabel.config(text="Table Has No Columns!")
+			errorLabel.config(text="Table Has No Columns!",fg='#D93232')
 	else:
-		errorLabel.config(text="No Table Was Selected.")
+		errorLabel.config(text="No Table Was Selected.",fg='#D93232')
 
 @errorMessage
 def addRowToTable(entries, windowToDestroy):
@@ -338,13 +341,15 @@ def addRowToTable(entries, windowToDestroy):
 	windowToDestroy.grab_release()
 	windowToDestroy.destroy()
 	refreshTrees()
-	errorLabel.config(text="Row Inserted Successfully")
+	errorLabel.config(text="Row Inserted Successfully",fg='#20B519')
 
 def init_buttons():
-	functions = [deleteRow, createInputRowWindow, createDB, clearDb, createFocusedTable, dropTable]
-	texts = ["Delete\nrow", "Add\nNew Row", "Create\nDB", "Drop\nDB", "Import\ntable", "Drop\ntable"]
+	functions = [deleteRow, createInputRowWindow, clearDb, createFocusedTable, dropTable]
+	texts = ["Delete Row", "Add New Row", "Drop DataBase", "Import Table", "Drop Table"]
+	i= 1
 	for text, func in zip(texts, functions):
-		btn(text, func, frame=buttonsFrame, side='left')
+		btn(text, func,i, frame=buttonsFrame)
+		i += 1
 
 if __name__ == "__main__":
 	initWindowAndConnection()
