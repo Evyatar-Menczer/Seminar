@@ -64,38 +64,7 @@ class DataController:
 			self.conn.commit()
 		except Error as e:
 			raise ValueError(f"Could not drop table {table} - ", e)
-	
-	def createTable(self, tableFromDict):
-		"""Create the table {tableFromDict} into our DB.
 
-		Args:
-			tableFromDict (str): The name of the table that we wish to create.
-
-		Raises:
-			ValueError: {tableFromDict} is not one of the predetermined tables.
-			Exception: {tableFromDict} couldn't have been created.
-		"""
-		try:
-			if tableFromDict not in constants.tablesCreationSQL.keys():
-				raise ValueError('Only predetermined tables can be created!')
-			self.conn.commit()
-			
-			self.cursor.execute(f'DROP TABLE IF EXISTS {tableFromDict}')
-			
-			self.cursor.execute(constants.tablesCreationSQL[tableFromDict])
-			with open(f'./chinook/{tableFromDict}.csv', 'r', encoding="utf8") as t:
-				dr = csv.DictReader(t)
-				to_db = []
-				for i in dr:
-					del i["index"]
-					to_db.append(tuple(i.values()))
-		except Error as e:
-			raise Exception(f"Could not create table {tableFromDict} - ", e)
-		
-		self.cursor.executemany(
-			f"INSERT OR IGNORE INTO {tableFromDict} VALUES ({','.join(['?'] * len(to_db[0]))});", to_db)
-		self.conn.commit()
-	
 	def deleteRowFromTable(self, table: str, value: str):
 		"""Deleted the row that applies primary key = {value} from {table}. If there are multiple primary keys, it checks all of them
 
@@ -130,7 +99,7 @@ class DataController:
 			values (list(str)): values to add
 		Raises:
 			ValueError: Primary key must be unique!
-			ValueError: Please check cell types (For example you can't insert 'ABC' into an INTEGER type)
+			ValueError: Please enter correct input"
 		"""
 		try:
 			self.cursor.execute(
@@ -140,7 +109,7 @@ class DataController:
 			if e.args[0].startswith('UNIQUE'):
 				raise ValueError(f"Primary key must be unique!")
 			else:
-				raise ValueError(f"Please check cell types (For example you can't insert 'ABC' into an INTEGER type)")
+				raise ValueError(f"Invalid input! Make sure you entered valid TYPE")
 	
 	def checkIfStr(self, table, variable):
 		"""Checks if {variable} is of type NVARCHAR(X) in {table}
@@ -240,20 +209,4 @@ class DataController:
 
 if __name__ == "__main__":
 	m = DataController(constants.DATA_BASE)
-	# m.createDatabaseFromCSV()
-	# m.clear()
-	# m.dropTable("playlists")
-	# m.createTable("playlists")
-	# m.deleteRowFromTable('playlists', 1)
-	
-	# m.insertRowToTable('playlists', ['1', "'asd'"])
-	# m.updateRow('playlists', 'PlaylistId = 1', "Name = 'GOAT'")
-	
-	# m.getTableColumns('tracks')
-	
-	# m.cursor.execute("SELECT * FROM playlists;")
-	# print(m.cursor.fetchall())
-	
-	# m.cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';")
-	# print(m.cursor.fetchall())
 	m.dropConn()

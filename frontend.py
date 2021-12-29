@@ -1,13 +1,11 @@
 from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox
-import sqlite3
-import tkinter
 import backend
 import constants
 
 root = Tk()
-root.minsize(800, 800)
+root.minsize(1200, 800)
 
 # Frames:
 tablesFrame = Frame(root, width=120)
@@ -15,7 +13,7 @@ rowsFrame = Frame(root, width=400)
 top_container = Frame(root, width=800)
 low_container = Frame(root, width=400)
 buttonsFrame = Frame(top_container, width=400)
-error_frame = Frame(top_container, width=200)
+error_frame = Frame(top_container, width=1000)
 edit_frame = None
 
 # Trees:
@@ -23,10 +21,9 @@ tablesTree = ttk.Treeview(tablesFrame, columns='Tables', height=20, show="headin
 rowsTree = ttk.Treeview(rowsFrame, height=20, selectmode='browse')
 
 # Labels
-errorLabel = Label(error_frame, font=("Arial", 15))
-errorLabel.pack(side='top', anchor=CENTER)
+errorLabel = Label(error_frame, font=("Arial", 15), wraplength=400)
+errorLabel.pack(side='top', padx=20)
 rowsTreeLabel = Label(rowsFrame)
-
 
 selectedTable = None
 selectedTableIndex = None
@@ -34,8 +31,7 @@ selectedRowIdentifier = None
 selectedCell = None
 edit_pressed = False
 
-m = backend.DataController('./chinook.db')
-
+controller = backend.DataController('./chinook.db')
 
 def init_tables_tree() -> None:
 	"""Initialize rows tree.
@@ -43,15 +39,13 @@ def init_tables_tree() -> None:
 	Returns:
 		Treeview: The initialize tables tree.
 	"""
-	tablesTree.tag_configure('exists', background='cyan', foreground='black')
-	tablesTree.tag_configure('deleted', background='#D8D8D8', foreground='#8A8A8A')
+	tablesTree.tag_configure('exists', font=('Helvetica', 10), background='#1a6600', foreground='white')
+	tablesTree.tag_configure('deleted', font=('Helvetica', 10), background='#ff6666', foreground='white')
 	tablesTree.pack(side='top', fill=BOTH)
 	tablesTree.heading('Tables', text="Tables")
-	tablesTree.column('Tables', width=100)
-	tablesTree.bind('<ButtonRelease-1>',
-					lambda e: selectTable())  # used to give e
+	tablesTree.column('Tables', width=100, anchor=CENTER)
+	tablesTree.bind('<ButtonRelease-1>', lambda e: selectTable())  # used to give e
 	import_tables()
-
 
 def init_rows_tree() -> None:
 	"""Initialize rows tree.
@@ -61,38 +55,27 @@ def init_rows_tree() -> None:
 	"""
 	rowsTree.tag_configure('exists', background='cyan')
 	rowsTree.tag_configure('deleted', background='red')
-	
+
 	rowsTreeLabel.pack(side='top', anchor='nw')
-	
+
 	rowsTree.pack(side='top', fill=BOTH, expand=True)
 	rowsTree.bind('<ButtonRelease-1>', lambda e: selectTableCell(e))  # used to give e
-	
+
 	# Horizontal Scroll Bar
 	horscrlbar = ttk.Scrollbar(rowsTree, orient="horizontal", command=rowsTree.xview)
 	horscrlbar.pack(side='bottom', fill='x')
-	
+
 	# Vertical Scrool Bar
 	verscrlbar = ttk.Scrollbar(rowsTree, orient="vertical", command=rowsTree.yview)
 	verscrlbar.pack(side='right', fill='y')
-	
+
 	rowsTree.configure(xscrollcommand=horscrlbar.set)
 	rowsTree.configure(yscrollcommand=verscrlbar.set)
-
-
-# def on_edit(e):
-# 	if selectedTable:
-# 		global edit_pressed
-# 		edit_pressed = not edit_pressed
-# 		edit_input_frame(e)
-# 	else:
-# 		errorLabel.config(text='Please choose table')
-
 
 def on_ignore():
 	clear_edit_frame()
 
-
-def buttom_frame_insert(columns, current_row=None,disable_flag=0):
+def buttom_frame_insert(columns, current_row=None, disable_flag=0):
 	global edit_frame
 	edit_frame = Frame(low_container, width=400)
 	edit_frame.pack(side='top', padx=4, ipady=150, fill=BOTH, expand=False)
@@ -112,8 +95,7 @@ def buttom_frame_insert(columns, current_row=None,disable_flag=0):
 			edit_entry.insert(0, current_row[i])
 
 	return entries
-	
-	
+
 def edit_input_frame(e):
 	"""Create an input window in order to collect information to add a new row to the current table.
 	"""
@@ -122,18 +104,16 @@ def edit_input_frame(e):
 	col = int(rowsTree.identify_column(e.x)[1:]) - 1
 	selectedCell = [rowsTree.column(col)["id"], str(curItem[col]).replace("'", "\'").replace('"', '\"')]
 	if selectedTable:
-		columns = m.getTableColumns(selectedTable)
+		columns = controller.getTableColumns(selectedTable)
 		if len(columns) > 0:
-			entries = buttom_frame_insert(columns, current_row=curItem,disable_flag=1)
-			btn("Accept Changes", lambda: updateValue(
-				entries), 0, frame=edit_frame)
+			entries = buttom_frame_insert(columns, current_row=curItem, disable_flag=1)
+			btn("Accept Changes", lambda: updateValue(entries), 0, frame=edit_frame)
 			btn("Ignore Changes", on_ignore, 2, frame=edit_frame)
-		
-		else:
-			errorLabel.config(text="Table Has No Columns!")
-	else:
-		errorLabel.config(text="No Table Was Selected.")
 
+		else:
+			errorLabel.config(text="Table Has No Columns!", anchor=CENTER)
+	else:
+		errorLabel.config(text="No Table Was Selected.", anchor=CENTER)
 
 def updateValue(entries):
 	columns = []
@@ -145,20 +125,20 @@ def updateValue(entries):
 	for i in sorted(removeIndexes, reverse=True):
 		del columns[i]
 		del values[i]
-	
+
 	for i, c in enumerate(columns):
-		if m.checkIfStr(selectedTable, c):
+		if controller.checkIfStr(selectedTable, c):
 			values[i] = f'"{values[i]}"'
 	new_value_to_insert = ''
-	for i,col in enumerate(columns):
-		isStr = m.checkIfStr(selectedTable, col)
+	for i, col in enumerate(columns):
+		isStr = controller.checkIfStr(selectedTable, col)
 		if isStr:
-			if not i == len(columns)-1:
+			if not i == len(columns) - 1:
 				new_value_to_insert += f'{col} = "{entries[col]()}",\n'
 			else:
 				new_value_to_insert += f'{col} = "{entries[col]()}"'
 		else:
-			if not i == len(columns)-1:
+			if not i == len(columns) - 1:
 				new_value_to_insert += f'{col} = {entries[col]()},\n'
 			else:
 				new_value_to_insert += f'{col} = {entries[col]()}'
@@ -166,15 +146,15 @@ def updateValue(entries):
 		if len(selectedRowIdentifier) == 2:
 			condString = f'{selectedRowIdentifier[0]} = {selectedRowIdentifier[1]}'
 		elif len(selectedRowIdentifier) == 4:
-			condString = f'{selectedRowIdentifier[0]} = {selectedRowIdentifier[1]} AND {selectedRowIdentifier[2]} = {selectedRowIdentifier[3]}'
-		m.updateRow(selectedTable, condString, new_value_to_insert)
+			condString = f'{selectedRowIdentifier[0]} = {selectedRowIdentifier[1]} AND {selectedRowIdentifier[2]} = ' \
+						 f'{selectedRowIdentifier[3]}'
+		controller.updateRow(selectedTable, condString, new_value_to_insert)
 	except Exception as e:
 		messagebox.showerror("Error", e)
-		
-	errorLabel.config(text="Edit Completed Successfully", fg='#20B519')
+
+	errorLabel.config(text="Edit Completed Successfully", fg='#20B519', anchor=CENTER)
 	clear_edit_frame()
 	refreshTrees()
-
 
 class btn:
 	def __init__(self, text, command, i, frame=root) -> None:
@@ -188,9 +168,7 @@ class btn:
 			pady (int, optional): [description]. Defaults to 0.
 		"""
 		self.button = ttk.Button(frame, text=text, command=command)
-		
 		self.button.grid(row=1, column=i, padx=constants.BUTTON_PADX, ipady=3, ipadx=20)
-
 
 def errorMessage(func):
 	"""Decorator for functins clicks.
@@ -198,31 +176,27 @@ def errorMessage(func):
 		Args:
 			func (function): the function we're decorating
 	"""
-	
+
 	def inner(*args, **kwargs):
 		try:
 			return func(*args, **kwargs)
 		except Exception as e:
-			errorLabel.config(text=e)
-	
+			errorLabel.config(text=e, fg='#D93232', anchor=CENTER)
+
 	return inner
 
-
 def on_closing():
-	m.dropConn()
+	controller.dropConn()
 	root.destroy()
-
 
 def fixed_map(style, option):
 	return [elm for elm in style.map("Treeview", query_opt=option) if elm[:2] != ("!disabled", "!selected")]
 
-
 def clear_edit_frame():
-	global edit_frame,selectedCell
+	global edit_frame, selectedCell
 	if edit_frame:
 		edit_frame.grab_release()
 		edit_frame.destroy()
-
 
 def selectTable():
 	"""Selects and shows the table that pressed from the tables list.
@@ -269,26 +243,22 @@ def selectTableCell(e):
 	selectedCell = [rowsTree.column(col)["id"], str(
 		curItem[col]).replace("'", "\'").replace('"', '\"')]
 
-
 def initWindowAndConnection():
 	"""Initiates key variables such as root, style, tablesFrame, rowsFrame and buttonsFrame.
 	"""
 	root.geometry("1200x800")
 	root.title("Database Manager")
 	root.wm_attributes("-topmost", 1)
-	
+
 	style = ttk.Style()
-	style.map('Treeview', foreground=fixed_map(style, "foreground"),
-			  background=fixed_map(style, "background"))
-	
-	tablesFrame.pack(side='left', padx=5, fill=BOTH, expand=False)
-	
+	style.map('Treeview', foreground=fixed_map(style, "foreground"), background=fixed_map(style, "background"))
+
+	tablesFrame.pack(side='right', padx=5,pady=30, fill=BOTH, expand=False)
 	top_container.pack(side='top', padx=5, pady=10, fill=BOTH, expand=False, anchor=CENTER)
 	low_container.pack(side='bottom', padx=5, pady=10, fill=BOTH, expand=False, anchor=CENTER)
 	buttonsFrame.pack(side='left', padx=5, pady=10, fill=BOTH, expand=False)
-	error_frame.pack(side='right', padx=5, pady=10, fill=BOTH, expand=False)
+	error_frame.pack(side='left', padx=5, pady=10, fill=BOTH, expand=False)
 	rowsFrame.pack(side='top', padx=5, ipady=150, fill=BOTH, expand=False)
-
 
 # @errorMessage
 def import_tables() -> None:
@@ -297,16 +267,15 @@ def import_tables() -> None:
 	"""
 	for x in tablesTree.get_children():
 		tablesTree.delete(x)
-	
-	allPreTables = m.getPreTables()
-	m.cursor.execute(constants.ALL_TABLES_QUERY)
-	currentTables = m.cursor.fetchall()
+
+	allPreTables = controller.getPreTables()
+	controller.cursor.execute(constants.ALL_TABLES_QUERY)
+	currentTables = controller.cursor.fetchall()
 	for row in allPreTables:
 		if (row,) in currentTables:
 			tablesTree.insert('', 'end', values=row, tags=('exists',))
 		else:
 			tablesTree.insert('', 'end', values=row, tags=('deleted',))
-
 
 @errorMessage
 def fillRowsTree(sql: str):
@@ -317,12 +286,11 @@ def fillRowsTree(sql: str):
 	"""
 	for x in rowsTree.get_children():
 		rowsTree.delete(x)
-	
-	m.cursor.execute(sql)
-	for row in m.cursor:
+
+	controller.cursor.execute(sql)
+	for row in controller.cursor:
 		row = ['' if v is None else v for v in row]
 		rowsTree.insert('', 'end', values=row, tags=('exists',))
-
 
 @errorMessage
 def populateRowsTable(currTable):
@@ -331,57 +299,70 @@ def populateRowsTable(currTable):
 	Args:
 		currTable (str): Current table's name
 	"""
-	columns = tuple(m.getTableColumns(currTable))
+	columns = tuple(controller.getTableColumns(currTable))
 	rowsTree["columns"] = columns
 	for c in columns:
 		rowsTree.heading(c, text=c)
 		rowsTree.column(c, minwidth=rowsFrame.winfo_width() // len(columns), width=100)
-	
+
 	rowsTree['show'] = 'headings'
 	if columns:
 		fillRowsTree(f"SELECT * FROM {currTable};")
-
 
 @errorMessage
 def createDB():
 	"""Creates the database from the CSV files.
 	"""
-	m.createDatabaseFromCSV()
+	controller.createDatabaseFromCSV()
 	refreshTrees()
-	errorLabel.config(text="Created Database From CSV Files Successfully", fg='#20B519')
-
+	errorLabel.config(text="Created Database From CSV Files Successfully", fg='#20B519', anchor=CENTER)
 
 def clearDb():
 	"""Drops Database
 	"""
-	m.clear()
+	controller.clear()
 	refreshTrees()
-	errorLabel.config(text="Cleared DB Successfully")
-
-
-@errorMessage
-def createFocusedTable():
-	"""Create the current table
-	"""
-	global tablesTree
-	if selectedTable:
-		m.createTable(selectedTable)
-		refreshTrees()
-		errorLabel.config(text="Created Table Successfully", fg='#20B519')
-	else:
-		errorLabel.config(text="No Table Was Selected.", fg='#D93232')
-
+	errorLabel.config(text="Cleared DB Successfully", anchor=CENTER)
 
 def dropTable():
 	"""Drop the current table
 	"""
 	global tablesTree
 	if selectedTable:
-		m.dropTable(selectedTable)
+		controller.dropTable(selectedTable)
 		refreshTrees()
-		errorLabel.config(text="Dropped Table Successfully", fg='#20B519')
+		errorLabel.config(text="Dropped Table Successfully", fg='#20B519', anchor=CENTER)
 	else:
-		errorLabel.config(text="No Table Was Selected.", fg='#D93232')
+		errorLabel.config(text="No Table Was Selected.", fg='#D93232', anchor=CENTER)
+
+def open_drop_tbl_popup():
+	if not selectedTable:
+		errorLabel.config(text="No Table Was Selected.", fg='#D93232', anchor=CENTER)
+		return
+
+	MsgBox = messagebox.askquestion(f'Drop Table {selectedTable} ', 'Are you sure you want to drop this table ?',
+									   icon='warning')
+	if MsgBox == 'yes':
+		dropTable()
+
+
+def open_drop_db_popup():
+	MsgBox = messagebox.askquestion('WARNING! - Drop Data Base', 'All tables will be deleted.\nAre you sure you want to drop the database?',
+									   icon='warning')
+	if MsgBox == 'yes':
+		clearDb()
+
+def open_delete_row_popup():
+	if not selectedTable:
+		errorLabel.config(text="In order to delete a row, you need to select a table first", fg='#D93232', anchor=CENTER)
+		return
+	if not selectedCell:
+		errorLabel.config(text="No row was selected", fg='#D93232', anchor=CENTER)
+		return
+	MsgBox = messagebox.askquestion('Delete Row', 'Are you sure you want to delete the selected row?',
+									   icon='warning')
+	if MsgBox == 'yes':
+		clearDb()
 
 
 def refreshTrees():
@@ -393,43 +374,40 @@ def refreshTrees():
 		tablesTree.selection_set(tablesTree.get_children()[selectedTableIndex])
 	errorLabel.config(text='')
 
-
 @errorMessage
 def deleteRow():
 	"""Deletes the selected row
 	"""
 	global edit_frame
-	if selectedTable != None and selectedCell != None:
+	if selectedTable is not None and selectedCell is not None:
 		if len(selectedRowIdentifier) == 2:
 			cond = selectedRowIdentifier[1]
 		elif len(selectedRowIdentifier) == 4:
 			cond = [selectedRowIdentifier[1], selectedRowIdentifier[3]]
-		m.deleteRowFromTable(selectedTable, cond)
+		controller.deleteRowFromTable(selectedTable, cond)
 		refreshTrees()
 		edit_frame.grab_release()
 		edit_frame.destroy()
-		errorLabel.config(text="Deleted Row Successfully", fg='#20B519')
+		errorLabel.config(text="Deleted Row Successfully", fg='#20B519', anchor=CENTER)
 	else:
-		errorLabel.config(text="No Table/Cell Was Selected.", fg='#D93232')
-
+		errorLabel.config(text="In order to delete a row, you need to select a table first", fg='#D93232', anchor=CENTER)
 
 @errorMessage
 def createInputRowWindow():
 	"""Create an input window in order to collect information to add a new row to the current table.
 	"""
-	
+
 	if selectedTable is not None and not selectedCell:
-		columns = m.getTableColumns(selectedTable)
+		columns = controller.getTableColumns(selectedTable)
 		if len(columns) > 0:
 			entries = buttom_frame_insert(columns)
-			btn("Insert new row", lambda: addRowToTable(entries, edit_frame),0, frame=edit_frame)
+			btn("Insert new row", lambda: addRowToTable(entries, edit_frame), 0, frame=edit_frame)
 		else:
-			errorLabel.config(text="Table Has No Columns!", fg='#D93232')
+			errorLabel.config(text="Table Has No Columns!", fg='#D93232', anchor=CENTER)
 	elif selectedCell:
-		errorLabel.config(text="Cant add existing row.", fg='#D93232')
+		errorLabel.config(text="Cant add existing row", fg='#D93232', anchor=CENTER)
 	else:
-		errorLabel.config(text="Please choose Table.", fg='#D93232')
-	
+		errorLabel.config(text="In order to add a row, you need to select a table first", fg='#D93232', anchor=CENTER)
 
 @errorMessage
 def addRowToTable(entries, windowToDestroy):
@@ -449,31 +427,29 @@ def addRowToTable(entries, windowToDestroy):
 		for i in sorted(removeIndexes, reverse=True):
 			del columns[i]
 			del values[i]
-		
+
 		for i, c in enumerate(columns):
-			if m.checkIfStr(selectedTable, c):
+			if controller.checkIfStr(selectedTable, c):
 				values[i] = f'"{values[i]}"'
-		m.insertRowToTable(selectedTable, columns, values)
+		controller.insertRowToTable(selectedTable, columns, values)
 		windowToDestroy.grab_release()
 		windowToDestroy.destroy()
 		refreshTrees()
-		errorLabel.config(text="Row Inserted Successfully", fg='#20B519')
-
+		errorLabel.config(text="Row Inserted Successfully", fg='#20B519', anchor=CENTER)
 
 def init_buttons():
-	functions = [deleteRow, createInputRowWindow, clearDb, createFocusedTable, dropTable]
-	texts = ["Delete Row", "Add New Row", "Drop DataBase", "Import Table", "Drop Table"]
+	functions = [open_delete_row_popup, createInputRowWindow, open_drop_db_popup, open_drop_tbl_popup]
+	texts = ["Delete Row", "Add New Row", "Drop DataBase", "Drop Table"]
 	i = 1
 	for text, func in zip(texts, functions):
 		btn(text, func, i, frame=buttonsFrame)
 		i += 1
-
 
 if __name__ == "__main__":
 	initWindowAndConnection()
 	init_buttons()
 	init_rows_tree()
 	init_tables_tree()
-	
+
 	root.protocol("WM_DELETE_WINDOW", on_closing)
 	root.mainloop()
