@@ -34,6 +34,8 @@ class DataController:
 	# 		self.conn.commit()
 	# 	except Error as e:
 	# 		raise ValueError(f"Could not create database from predetermined CSV files - ", e)
+	def column_primary_check(self):
+		pass
 	
 	def clear(self):
 		"""Clears our DB file.
@@ -42,7 +44,7 @@ class DataController:
 			ValueError: Could not clear our DB file.
 		"""
 		try:
-			for k in DataController.constants.keys():
+			for k in constants.tablesWhereSQL.keys():
 				self.cursor.execute(f"DROP TABLE IF EXISTS {k}")
 			self.conn.commit()
 		except Error as e:
@@ -168,7 +170,7 @@ class DataController:
 		"""
 		try:
 			self.cursor.execute(
-				f"UPDATE {table} SET {value} WHERE {condition}"
+				f"UPDATE {table} SET {value} WHERE {condition};"
 			)
 			self.conn.commit()
 		except Error as e:
