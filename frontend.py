@@ -452,6 +452,6 @@ if __name__ == "__main__":
 	init_buttons()
 	init_rows_tree()
 	init_tables_tree()
-
+	print('hi')
 	root.protocol("WM_DELETE_WINDOW", on_closing)
 	root.mainloop()
