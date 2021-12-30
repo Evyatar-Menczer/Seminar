@@ -118,6 +118,8 @@ def edit_input_frame(e):
 	"""Create an input window in order to collect information to add a new row to the current table.
 	"""
 	global selectedTable, edit_frame, selectedCell, selectedRowIdentifier
+	if edit_frame:
+		clear_edit_frame()
 	curItem = rowsTree.item(rowsTree.focus())['values']
 	col = int(rowsTree.identify_column(e.x)[1:]) - 1
 	selectedCell = [rowsTree.column(col)["id"], str(curItem[col]).replace("'", "\'").replace('"', '\"')]
@@ -162,6 +164,8 @@ def updateValue(entries):
 				new_value_to_insert += f'{col} = {entries[col]()},\n'
 			else:
 				new_value_to_insert += f'{col} = {entries[col]()}'
+	print(selectedRowIdentifier)
+	print(new_value_to_insert)
 	try:
 		if len(selectedRowIdentifier) == 2:
 			condString = f'{selectedRowIdentifier[0]} = {selectedRowIdentifier[1]}'
@@ -261,7 +265,7 @@ def selectTableCell(e):
 	if curItem == '':
 		return
 	col = int(rowsTree.identify_column(e.x)[1:]) - 1
-	if selectedTable != 'playlist_track':
+	if selectedTable != 'playlist_track' and selectedTable != 'invoices':
 		selectedRowIdentifier = [rowsTree.column(0)["id"], curItem[0]]
 	else:
 		selectedRowIdentifier = [rowsTree.column(
@@ -417,7 +421,8 @@ def deleteRow():
 def createInputRowWindow():
 	"""Create an input window in order to collect information to add a new row to the current table.
 	"""
-	
+	if edit_frame:
+		clear_edit_frame()
 	if selectedTable is not None and not selectedCell:
 		columns = m.getTableColumns(selectedTable)
 		if len(columns) > 0:

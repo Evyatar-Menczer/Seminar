@@ -155,6 +155,8 @@ class DataController:
 		variables = constants.tablesCreationSQL[table]
 		if variables[variables.index(f'{variable} '):].startswith(f'{variable} NVARCHAR'):
 			return True
+		if variables[variables.index(f'{variable} '):].startswith(f'{variable} DATETIME'):
+			return True
 		return False
 	
 	def updateRow(self, table, condition, value):
