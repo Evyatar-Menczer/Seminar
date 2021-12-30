@@ -143,18 +143,14 @@ def updateValue(entries):
 	for c, e in entries.items():
 		columns.append(c)
 		values.append(e())
-	removeIndexes = [i for i, v in enumerate(values) if v == '']
-	for i in sorted(removeIndexes, reverse=True):
+	remove_list = [i for i, value in enumerate(values) if value == '']
+	for i in sorted(remove_list, reverse=True):
 		del columns[i]
-		del values[i]
 
-	for i, c in enumerate(columns):
-		if controller.checkIfStr(selectedTable, c):
-			values[i] = f'"{values[i]}"'
 	new_value_to_insert = ''
 	for i, col in enumerate(columns):
-		isStr = controller.checkIfStr(selectedTable, col)
-		if isStr:
+		quotes_needed = controller.check_if_quotes_needed(selectedTable, col)
+		if quotes_needed:
 			if not i == len(columns) - 1:
 				new_value_to_insert += f'{col} = "{entries[col]()}",\n'
 			else:
@@ -164,15 +160,13 @@ def updateValue(entries):
 				new_value_to_insert += f'{col} = {entries[col]()},\n'
 			else:
 				new_value_to_insert += f'{col} = {entries[col]()}'
-	print(selectedRowIdentifier)
-	print(new_value_to_insert)
 	try:
 		if len(selectedRowIdentifier) == 2:
-			condString = f'{selectedRowIdentifier[0]} = {selectedRowIdentifier[1]}'
+			condition_to_query = f'{selectedRowIdentifier[0]} = {selectedRowIdentifier[1]}'
 		elif len(selectedRowIdentifier) == 4:
-			condString = f'{selectedRowIdentifier[0]} = {selectedRowIdentifier[1]} AND {selectedRowIdentifier[2]} = ' \
+			condition_to_query = f'{selectedRowIdentifier[0]} = {selectedRowIdentifier[1]} AND {selectedRowIdentifier[2]} = ' \
 						 f'{selectedRowIdentifier[3]}'
-		controller.updateRow(selectedTable, condString, new_value_to_insert)
+		controller.updateRow(selectedTable, condition_to_query, new_value_to_insert)
 	except Exception as e:
 		messagebox.showerror("Error", e)
 
@@ -300,6 +294,7 @@ def import_tables():
 		else:
 			tablesTree.insert('', 'end', values=row, tags=('deleted',))
 
+
 @error_decorator
 def fillRowsTree(sql: str):
 	"""Filling the rows of the rowsTree
@@ -314,6 +309,7 @@ def fillRowsTree(sql: str):
 	for row in controller.cursor:
 		row = ['' if v is None else v for v in row]
 		rowsTree.insert('', 'end', values=row, tags=('exists',))
+
 
 @error_decorator
 def populateRowsTable(currTable: str):
@@ -421,7 +417,6 @@ def deleteRow():
 		errorLabel.config(text="In order to delete a row, you need to select a table first", fg='#D93232', anchor=CENTER)
 
 
-
 @error_decorator
 def createInputRowWindow():
 	"""Create an input window in order to collect information to add a new row to the current table.
@@ -446,12 +441,10 @@ def return_to_default():
 	if selectedTable:
 		selectedTable = None
 	refreshTrees()
-		
-	
 	
 	
 @error_decorator
-def addRowToTable(entries, windowToDestroy):
+def addRowToTable(entries, window_to_close):
 	"""collect information to add a new row to the current table.
 
 	Args:
@@ -470,11 +463,11 @@ def addRowToTable(entries, windowToDestroy):
 			del values[i]
 
 		for i, c in enumerate(columns):
-			if controller.checkIfStr(selectedTable, c):
+			if controller.check_if_quotes_needed(selectedTable, c):
 				values[i] = f'"{values[i]}"'
 		controller.insertRowToTable(selectedTable, columns, values)
-		windowToDestroy.grab_release()
-		windowToDestroy.destroy()
+		window_to_close.grab_release()
+		window_to_close.destroy()
 		refreshTrees()
 		errorLabel.config(text="Row Inserted Successfully", fg='#20B519', anchor=CENTER)
 

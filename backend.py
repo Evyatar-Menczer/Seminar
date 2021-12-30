@@ -5,7 +5,9 @@ from sqlite3 import Error
 
 
 class DataController:
-	
+	"""
+	Class that controls all backend data
+	"""
 	def __init__(self, db_file) -> None:
 		"""Initialize class object and establishing connection to the DB file.
 
@@ -111,15 +113,15 @@ class DataController:
 			else:
 				raise ValueError(f"Invalid input! Make sure you entered valid TYPE")
 	
-	def checkIfStr(self, table, variable):
-		"""Checks if {variable} is of type NVARCHAR(X) in {table}
+	def check_if_quotes_needed(self, table, variable) -> bool:
+		"""Checks if var is instance of str or datetime in {table}
 
 		Args:
 			table (str): table's name
 			variable (str): variable's name
 
 		Returns:
-			Boolean: True if variable is of type NVARCHAR(x), Otherwise False.
+			Boolean
 		"""
 		variables = constants.tablesCreationSQL[table]
 		if variables[variables.index(f'{variable} '):].startswith(f'{variable} NVARCHAR'):
@@ -128,7 +130,7 @@ class DataController:
 			return True
 		return False
 	
-	def updateRow(self, table, condition, value):
+	def updateRow(self, table, condition, value) -> None:
 		"""Updates {value} in all rows that apply {condition} in {table}.
 
 		Args:
