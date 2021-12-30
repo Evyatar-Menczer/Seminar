@@ -1,5 +1,4 @@
 __pycache__/
-
-__pycache__/backend.cpython-38.pyc
-__pycache__/constants.cpython-38.pyc
 .venv
+.idea
+
