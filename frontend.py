@@ -17,7 +17,7 @@ error_frame = Frame(top_container, width=1000)
 edit_frame = None
 
 # Trees:
-tablesTree = ttk.Treeview(tablesFrame, columns='Tables', height=20, show="headings")
+tablesTree = ttk.Treeview(tablesFrame, columns='Tables', height=11, show="headings")
 rowsTree = ttk.Treeview(rowsFrame, height=20, selectmode='browse')
 
 # Labels
@@ -276,7 +276,7 @@ def initWindowAndConnection():
 	style = ttk.Style()
 	style.map('Treeview', foreground=fixed_map(style, "foreground"), background=fixed_map(style, "background"))
 
-	tablesFrame.pack(side='right', padx=5,pady=30, fill=BOTH, expand=False)
+	tablesFrame.pack(side='right', padx=5,pady=90, fill=BOTH, expand=False)
 	top_container.pack(side='top', padx=5, pady=10, fill=BOTH, expand=False, anchor=CENTER)
 	low_container.pack(side='bottom', padx=5, pady=10, fill=BOTH, expand=False, anchor=CENTER)
 	buttonsFrame.pack(side='left', padx=5, pady=10, fill=BOTH, expand=False)
