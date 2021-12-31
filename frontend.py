@@ -446,11 +446,6 @@ def present_new_trees() -> None:
 		tables_tree.selection_set(tables_tree.get_children()[selected_table_index])
 	error_label.config(text='')
 
-
-def restore_db():
-	pass
-
-
 @error_decorator
 def delete_entire_row() -> None:
 	"""
@@ -529,9 +524,9 @@ def insert_new_row_to_table(entries: dict, window_to_close) -> None:
 
 
 def init_buttons() -> None:
-	functions = [delete_row_popup, input_row_info_window, drop_db_popup, restore_db, drop_table_popup,
+	functions = [delete_row_popup, input_row_info_window, drop_db_popup, drop_table_popup,
 				 return_to_default]
-	texts = ["Delete Row", "Add New Row", "Drop DataBase", "Restore DataBase", "Drop Table", 'Default View']
+	texts = ["Delete Row", "Add New Row", "Drop DataBase", "Drop Table", 'Default View']
 	i = 1
 	for text, func in zip(texts, functions):
 		Button_c(text, func, i, frame=buttons_frame)
