@@ -3,6 +3,10 @@ from tkinter import ttk
 from tkinter import messagebox
 import backend
 import constants
+from constants import error_messages as err_msgs
+from constants import success_messages as success_msgs
+from constants import warning_messages as warn_msgs
+
 
 root = Tk()
 root.minsize(1200, 800)
@@ -11,7 +15,7 @@ root.minsize(1200, 800)
 tables_frame = Frame(root, width=120)
 rows_frame = Frame(root, width=400)
 top_container = Frame(root, width=800)
-low_container = Frame(root, width=400)
+low_container = Frame(root, width=400,)
 buttons_frame = Frame(top_container, width=400)
 error_frame = Frame(top_container, width=1000)
 edit_frame = None
@@ -21,7 +25,7 @@ tables_tree = ttk.Treeview(tables_frame, columns='Tables', height=11, show="head
 rows_tree = ttk.Treeview(rows_frame, height=20, selectmode='browse')
 
 # Labels Definition
-error_label = Label(error_frame, font=("Arial", 15), wraplength=400)
+error_label = Label(error_frame, font=("Arial", 15), wraplength=300)
 error_label.pack(side='top', padx=20)
 rows_tree_label = Label(rows_frame)
 
@@ -77,8 +81,8 @@ def init_rows_tree() -> None:
 	horizontal_scroll = ttk.Scrollbar(rows_tree, orient="horizontal", command=rows_tree.xview)
 	horizontal_scroll.pack(side='bottom', fill='x')
 
-	rows_tree.tag_configure('exists', background='cyan')
-	rows_tree.tag_configure('deleted', background='red')
+	rows_tree.tag_configure('exists', background='#80ffcc')
+	rows_tree.tag_configure('deleted', background='#ff6666')
 
 	rows_tree_label.pack(side='top', anchor='nw')
 	rows_tree.pack(side='top', fill=BOTH, expand=True)
@@ -100,7 +104,7 @@ def bottom_frame_insert(columns: list, current_row: str = None, disable_flag: in
 	global edit_frame
 
 	edit_frame = Frame(low_container, width=400)
-	edit_frame.pack(side='bottom', padx=4, ipady=150, fill=BOTH, expand=False)
+	edit_frame.pack(side='top', padx=4, ipady=150)
 
 	entries = {}
 	row = 1
@@ -149,9 +153,9 @@ def edit_input_frame(e) -> None:
 				Button_c("Ignore Changes", on_ignore, 2, frame=edit_frame)
 
 			else:
-				error_label.config(text="Table Has No Columns!", anchor=CENTER)
+				error_label.config(text=err_msgs["empty_table"], anchor=CENTER)
 		else:
-			error_label.config(text="No Table Was Selected.", anchor=CENTER)
+			error_label.config(text=err_msgs["no_tbl_selected"], anchor=CENTER)
 	except Exception as error:
 		messagebox.showerror("Error", error)
 
@@ -198,7 +202,7 @@ def update_value(entries: dict) -> None:
 	except Exception as error:
 		messagebox.showerror("Error", error)
 
-	error_label.config(text="Edit Completed Successfully", fg='#20B519', anchor=CENTER)
+	error_label.config(text=success_msgs["edit_completed"], fg='#20B519', anchor=CENTER)
 	clear_edit_frame()
 	refreshTrees()
 
@@ -305,10 +309,12 @@ def initWindowAndConnection():
 
 	tables_frame.pack(side='right', padx=5, pady=90, fill=BOTH, expand=False)
 	top_container.pack(side='top', padx=5, pady=10, fill=BOTH, expand=False, anchor=CENTER)
-	low_container.pack(side='bottom', padx=5, pady=10, fill=BOTH, expand=False, anchor=CENTER)
-	buttons_frame.pack(side='left', padx=5, pady=10, fill=BOTH, expand=False)
-	error_frame.pack(side='left', padx=5, pady=10, fill=BOTH, expand=False)
+	buttons_frame.grid(row=1, column=1, padx=5, pady=10)
+	error_frame.grid(row=1, column=2, padx=5, pady=10)
 	rows_frame.pack(side='top', padx=5, ipady=150, fill=BOTH, expand=False)
+	low_container.pack(side='bottom', padx=5, pady=10, fill=BOTH, expand=False, anchor=CENTER)
+
+
 
 
 def import_tables():
@@ -361,20 +367,12 @@ def populate_rows_table(currTable: str):
 	if columns:
 		fillRowsTree(f"SELECT * FROM {currTable};")
 
-@error_decorator
-def createDB():
-	"""Creates the database from the CSV files.
-	"""
-	controller.createDatabaseFromCSV()
-	refreshTrees()
-	error_label.config(text="Created Database From CSV Files Successfully", fg='#20B519', anchor=CENTER)
-
 def clearDb():
 	"""Drops Database
 	"""
 	controller.clear()
 	refreshTrees()
-	error_label.config(text="Cleared DB Successfully", anchor=CENTER)
+	error_label.config(text=success_msgs["clear_db"], anchor=CENTER)
 
 def dropTable():
 	"""Drop the current table
@@ -383,36 +381,35 @@ def dropTable():
 	if selected_table:
 		controller.dropTable(selected_table)
 		refreshTrees()
-		error_label.config(text="Dropped Table Successfully", fg='#20B519', anchor=CENTER)
+		error_label.config(text=success_msgs["drop_tbl"], fg='#20B519', anchor=CENTER)
 	else:
-		error_label.config(text="No Table Was Selected.", fg='#D93232', anchor=CENTER)
+		error_label.config(text=err_msgs["no_tbl_selected"], fg='#D93232', anchor=CENTER)
 
 def open_drop_tbl_popup():
 	if not selected_table:
-		error_label.config(text="No Table Was Selected.", fg='#D93232', anchor=CENTER)
+		error_label.config(text=err_msgs["no_tbl_selected"], fg='#D93232', anchor=CENTER)
 		return
 
-	MsgBox = messagebox.askquestion(f'Drop Table {selected_table} ', 'Are you sure you want to drop this table ?',
+	MsgBox = messagebox.askquestion(f'Drop Table {selected_table} ',warn_msgs["drop_tbl_warning"],
 									   icon='warning')
 	if MsgBox == 'yes':
 		dropTable()
 
 
 def open_drop_db_popup():
-	MsgBox = messagebox.askquestion('WARNING! - Drop Data Base', 'All tables will be deleted.\nAre you sure you want to drop the database?',
+	MsgBox = messagebox.askquestion('WARNING! - Drop Data Base', warn_msgs["drop_db_warning"],
 									   icon='warning')
 	if MsgBox == 'yes':
 		clearDb()
 
 def open_delete_row_popup():
 	if not selected_table:
-		error_label.config(text="In order to delete a row, you need to select a table first", fg='#D93232', anchor=CENTER)
+		error_label.config(text=err_msgs["row_dlt_no_tbl"], fg='#D93232', anchor=CENTER)
 		return
 	if not selected_cell:
-		error_label.config(text="No row was selected", fg='#D93232', anchor=CENTER)
+		error_label.config(text=err_msgs["no_row_selected"], fg='#D93232', anchor=CENTER)
 		return
-	MsgBox = messagebox.askquestion('Delete Row', 'Are you sure you want to delete the selected row?',
-									   icon='warning')
+	MsgBox = messagebox.askquestion('Delete Row', warn_msgs["row_delete_warning"], icon='warning')
 	if MsgBox == 'yes':
 		deleteRow()
 
@@ -445,10 +442,9 @@ def deleteRow():
 		refreshTrees()
 		edit_frame.grab_release()
 		edit_frame.destroy()
-		error_label.config(text="Deleted Row Successfully", fg='#20B519', anchor=CENTER)
+		error_label.config(text=success_msgs["delete_row"], fg='#20B519', anchor=CENTER)
 	else:
-		error_label.config(text="In order to delete a row, you need to select a table first", fg='#D93232', anchor=CENTER)
-
+		error_label.config(text=err_msgs["row_dlt_no_tbl"], fg='#D93232', anchor=CENTER)
 
 @error_decorator
 def createInputRowWindow():
@@ -462,11 +458,11 @@ def createInputRowWindow():
 			entries = bottom_frame_insert(columns)
 			Button_c("Insert new row", lambda: addRowToTable(entries, edit_frame), 0, frame=edit_frame)
 		else:
-			error_label.config(text="Table Has No Columns!", fg='#D93232', anchor=CENTER)
+			error_label.config(text=err_msgs["empty_table"], fg='#D93232', anchor=CENTER)
 	elif selected_cell:
-		error_label.config(text="Cant add existing row", fg='#D93232', anchor=CENTER)
+		error_label.config(text=err_msgs["uncheck_before_insret"], fg='#D93232', anchor=CENTER)
 	else:
-		error_label.config(text="In order to add a row, you need to select a table first", fg='#D93232', anchor=CENTER)
+		error_label.config(text=err_msgs["row_add_no_tbl"], fg='#D93232', anchor=CENTER)
 
 
 def return_to_default():
@@ -502,12 +498,12 @@ def addRowToTable(entries, window_to_close):
 		window_to_close.grab_release()
 		window_to_close.destroy()
 		refreshTrees()
-		error_label.config(text="Row Inserted Successfully", fg='#20B519', anchor=CENTER)
+		error_label.config(text=success_msgs["row_insert"], fg='#20B519', anchor=CENTER)
 
 
 def init_buttons():
-	functions = [open_delete_row_popup, createInputRowWindow, open_drop_db_popup, restore_db, open_drop_tbl_popup,return_to_default]
-	texts = ["Delete Row", "Add New Row", "Drop DataBase","Restore DataBase", "Drop Table", 'Default View']
+	functions = [open_delete_row_popup, createInputRowWindow, open_drop_db_popup, open_drop_tbl_popup,return_to_default]
+	texts = ["Delete Row", "Add New Row", "Drop DataBase", "Drop Table", 'Default View']
 	i = 1
 	for text, func in zip(texts, functions):
 		Button_c(text, func, i, frame=buttons_frame)
@@ -519,6 +515,5 @@ if __name__ == "__main__":
 	init_buttons()
 	init_rows_tree()
 	init_tables_tree()
-	print('hi')
 	root.protocol("WM_DELETE_WINDOW", on_closing)
 	root.mainloop()

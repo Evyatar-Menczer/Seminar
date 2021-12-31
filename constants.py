@@ -29,3 +29,28 @@ tables_where_SQL = {
 	"playlist_track": "PlaylistId TrackId",
 	"invoice_items": "InvoiceLineId",
 }
+
+
+error_messages = {
+	"empty_table": "Table Has No Columns!",
+	"no_tbl_selected":"In order to drop a table, you need to select a table first",
+	"row_dlt_no_tbl":"In order to delete a row, you need to select a table first",
+	"no_row_selected":"In order to drop a row, you need to select a table first",
+	"uncheck_before_insret":"Please un-check selected row before inserting a new row",
+	"row_add_no_tbl":"In order to add a row, you need to select a table first"
+
+}
+
+success_messages = {
+	"edit_completed":"Edit Completed Successfully",
+	"clear_db": "Cleared DB Successfully",
+	"drop_tbl":"Dropped Table Successfully",
+	"delete_row":"Deleted Row Successfully",
+	"row_insert":"Row Inserted Successfully"
+}
+
+warning_messages = {
+	"drop_tbl_warning":"Are you sure you want to drop this table ?",
+	"drop_db_warning":"All tables will be deleted.\nAre you sure you want to drop the database?",
+	"row_delete_warning":"Are you sure you want to delete the selected row?"
+}
