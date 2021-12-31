@@ -203,7 +203,7 @@ def update_value(entries: dict) -> None:
 	refreshTrees()
 
 
-def error_decorator(func) -> function:
+def error_decorator(func):
 	"""
 		Decorator for functions clicks.
 		Args:
