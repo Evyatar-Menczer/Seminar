@@ -44,7 +44,7 @@ class DataController:
 			ValueError: Could not clear our DB file.
 		"""
 		try:
-			for k in constants.tablesWhereSQL.keys():
+			for k in constants.tables_where_SQL.keys():
 				self.cursor.execute(f"DROP TABLE IF EXISTS {k}")
 			self.conn.commit()
 		except Error as e:
@@ -79,9 +79,9 @@ class DataController:
 		try:
 			if type(value) is int:
 				self.cursor.execute(
-					f"DELETE FROM {table} WHERE {constants.tablesWhereSQL[table]} = {value}")
+					f"DELETE FROM {table} WHERE {constants.tables_where_SQL[table]} = {value}")
 			elif len(value) == 2:
-				keys = constants.tablesWhereSQL[table].split()
+				keys = constants.tables_where_SQL[table].split()
 				self.cursor.execute(
 					f"DELETE FROM {table} WHERE {keys[0]} = {value[0]} AND {keys[1]} = {value[1]}")
 			else:
@@ -182,17 +182,17 @@ class DataController:
 		except Error as e:
 			raise ValueError(f"Could not select all from table {table} - ", e)
 	
-	def getTableColumns(self, table):
-		"""Return all columns from {table}.
+	def getTableColumns(self, table: str) -> []:
+		"""Return all columns from selected table.
 
 		Args:
 			table (str): table's name.
 
 		Raises:
-			ValueError: Could not return all columns from table.
+			ValueError: If could not return all columns from selected table.
 
 		Returns:
-			list: all columns from table.
+			list: all columns from selected table.
 		"""
 		try:
 			if (table,) not in self.getTables():
