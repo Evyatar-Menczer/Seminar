@@ -2,7 +2,7 @@ DATA_BASE = 'chinook.db'
 ALL_TABLES_QUERY = "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';"
 BUTTON_PADX = 10
 
-tablesCreationSQL = {
+SQL_table_creation = {
 	"playlists": f"CREATE TABLE IF NOT EXISTS playlists (PlaylistId INTEGER,Name NVARCHAR(120), PRIMARY KEY(PlaylistId));",
 	"artists": f"CREATE TABLE IF NOT EXISTS artists (ArtistId INTEGER,Name NVARCHAR(120), PRIMARY KEY(ArtistId));",
 	"media_types": f"CREATE TABLE IF NOT EXISTS media_types (MediaTypeId INTEGER,Name NVARCHAR(120), PRIMARY KEY(MediaTypeId));",
