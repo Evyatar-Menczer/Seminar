@@ -20,14 +20,14 @@ buttons_frame = Frame(top_container, width=400)
 error_frame = Frame(top_container, width=1000)
 edit_frame = None
 
-# Trees Definition:
-tables_tree = ttk.Treeview(tables_frame, columns='Tables', height=11, show="headings")
-rows_tree = ttk.Treeview(rows_frame, height=20, selectmode='browse')
-
 # Labels Definition
 error_label = Label(error_frame, font=("Arial", 15), wraplength=300)
 error_label.pack(side='top', padx=20)
 rows_tree_label = Label(rows_frame)
+
+# Trees Definition:
+tables_tree = ttk.Treeview(tables_frame, columns='Tables', height=11, show="headings")
+rows_tree = ttk.Treeview(rows_frame, height=20, selectmode='browse')
 
 selected_table = None
 selected_table_index = None
@@ -146,10 +146,10 @@ def edit_input_frame(e) -> None:
 	selected_cell = [rows_tree.column(col)["id"], str(current_item[col]).replace("'", "\'").replace('"', '\"')]
 	try:
 		if selected_table:
-			columns = controller.getTableColumns(selected_table)
+			columns = controller.get_all_columns(selected_table)
 			if len(columns) > 0:
 				entries = bottom_frame_insert(columns, current_row=current_item, disable_flag=1)
-				Button_c("Accept Changes", lambda: update_value(entries), 0, frame=edit_frame)
+				Button_c("Accept Changes", lambda: update_cell_value(entries), 0, frame=edit_frame)
 				Button_c("Ignore Changes", on_ignore, 2, frame=edit_frame)
 
 			else:
@@ -160,7 +160,7 @@ def edit_input_frame(e) -> None:
 		messagebox.showerror("Error", error)
 
 
-def update_value(entries: dict) -> None:
+def update_cell_value(entries: dict) -> None:
 	"""
 		Updates the selected value of a cell of a specific row.
 		Raises: Error if selected table is None/length of columns is 0 or smaller
@@ -176,11 +176,11 @@ def update_value(entries: dict) -> None:
 		del values[index]
 
 	for index, column in enumerate(columns):
-		if controller.checkIfStr(selected_table, column):
+		if controller.check_if_quotes_needed(selected_table, column):
 			values[index] = f'"{values[index]}"'
 	new_value_to_insert = ''
 	for index, column in enumerate(columns):
-		is_str = controller.checkIfStr(selected_table, column)
+		is_str = controller.check_if_quotes_needed(selected_table, column)
 		if is_str:
 			if not index == len(columns) - 1:
 				new_value_to_insert += f'{column} = "{entries[column]()}",\n'
@@ -197,14 +197,14 @@ def update_value(entries: dict) -> None:
 			cond_string = f'{selected_row_id[0]} = {selected_row_id[1]}'
 		elif len(selected_row_id) == 4:
 			cond_string = f'{selected_row_id[0]} = {selected_row_id[1]} AND {selected_row_id[2]} = ' \
-				f'{selected_row_id[3]}'
-		controller.updateRow(selected_table, cond_string, new_value_to_insert)
+						  f'{selected_row_id[3]}'
+		controller.update_selected_row(selected_table, cond_string, new_value_to_insert)
 	except Exception as error:
 		messagebox.showerror("Error", error)
 
 	error_label.config(text=success_msgs["edit_completed"], fg='#20B519', anchor=CENTER)
 	clear_edit_frame()
-	refreshTrees()
+	present_new_trees()
 
 
 def error_decorator(func):
@@ -215,17 +215,17 @@ def error_decorator(func):
 		Returns: function
 	"""
 
-	def inner(*args, **kwargs):
+	def inner_func(*args, **kwargs):
 		try:
 			return func(*args, **kwargs)
 		except Exception as e:
 			error_label.config(text=e, fg='#D93232', anchor=CENTER)
 
-	return inner
+	return inner_func
 
 
 def on_closing():
-	controller.dropConn()
+	controller.stop_connection()
 	root.destroy()
 
 
@@ -259,14 +259,14 @@ def select_table() -> None:
 		current_item = tables_tree.item(tables_tree.focus())['values']
 		if current_item:
 			selected_table = current_item[0]
-			populate_rows_table(current_item[0])
+			insert_table_rows(current_item[0])
 			rows_tree_label.config(text=f'{selected_table.capitalize()} Table', font=("Arial", 18))
 		elif selected_table:
 			current_item = selected_table
-			populate_rows_table(current_item)
+			insert_table_rows(current_item)
 			rows_tree_label.config(text=f'{selected_table.capitalize()} Table', font=("Arial", 18))
 		else:
-			populate_rows_table('')
+			insert_table_rows('')
 			rows_tree_label.config(text='')
 	except Exception as error:
 		messagebox.showerror("Error", error)
@@ -297,8 +297,9 @@ def select_table_cell(e) -> None:
 		current_item[col]).replace("'", "\'").replace('"', '\"')]
 
 
-def initWindowAndConnection():
-	"""Initiates key variables such as root, style, tables_frame, rows_frame and buttons_frame.
+def init_frames():
+	"""
+		Initiates key variables such as root, style, tables_frame, rows_frame and buttons_frame.
 	"""
 	root.geometry("1200x800")
 	root.title("Database Manager")
@@ -307,7 +308,7 @@ def initWindowAndConnection():
 	style = ttk.Style()
 	style.map('Treeview', foreground=fixed_map(style, "foreground"), background=fixed_map(style, "background"))
 
-	tables_frame.pack(side='right', padx=5, pady=90, fill=BOTH, expand=False)
+	tables_frame.pack(side='right', padx=5, pady=100, fill=BOTH, expand=False)
 	top_container.pack(side='top', padx=5, pady=10, fill=BOTH, expand=False, anchor=CENTER)
 	buttons_frame.grid(row=1, column=1, padx=5, pady=10)
 	error_frame.grid(row=1, column=2, padx=5, pady=10)
@@ -317,29 +318,32 @@ def initWindowAndConnection():
 
 
 
-def import_tables():
+def import_tables() -> None:
 	"""
 		Import and insert rows of chosen table, row by row
 	"""
 	for x in tables_tree.get_children():
 		tables_tree.delete(x)
 
-	allPreTables = controller.getPreTables()
+	all_pred_tables = controller.get_pred_table()
 	controller.cursor.execute(constants.ALL_TABLES_QUERY)
-	currentTables = controller.cursor.fetchall()
-	for row in allPreTables:
-		if (row,) in currentTables:
-			tables_tree.insert('', 'end', values=row, tags=('exists',))
-		else:
-			tables_tree.insert('', 'end', values=row, tags=('deleted',))
+	current_tables = controller.cursor.fetchall()
+	for row in all_pred_tables:
+		try:
+			if (row,) in current_tables:
+				tables_tree.insert('', 'end', values=row, tags=('exists',))
+			else:
+				tables_tree.insert('', 'end', values=row, tags=('deleted',))
+		except Exception as error:
+			messagebox.showerror("Error", error)
 
 
 @error_decorator
-def fillRowsTree(sql: str):
-	"""Filling the rows of the rows_tree
-
-	Args:
-		sql (str): the SQL query we're using
+def fill_rows(sql: str) -> None:
+	"""
+		Filling the rows of rows_tree with the sql parameter
+		Args:
+			sql (str): the SQL query we're using
 	"""
 	for x in rows_tree.get_children():
 		rows_tree.delete(x)
@@ -351,71 +355,90 @@ def fillRowsTree(sql: str):
 
 
 @error_decorator
-def populate_rows_table(currTable: str):
+def insert_table_rows(current_table: str) -> None:
 	"""
-		Filling columns of the rows_tree before calling fillRowsTree(sql) to fill the rows right after.
+		Filling the specified columns of the selected table and afterwards filling the tables' rows.
 		Args:
-			currTable (str): Current table's name
+			current_table (str): Current table's name
 	"""
-	columns = tuple(controller.getTableColumns(currTable))
+	columns = tuple(controller.get_all_columns(current_table))
 	rows_tree["columns"] = columns
-	for c in columns:
-		rows_tree.heading(c, text=c)
-		rows_tree.column(c, minwidth=rows_frame.winfo_width() // len(columns), width=100)
+	for column in columns:
+		rows_tree.heading(column, text=column)
+		rows_tree.column(column, minwidth=rows_frame.winfo_width() // len(columns), width=100)
 
 	rows_tree['show'] = 'headings'
 	if columns:
-		fillRowsTree(f"SELECT * FROM {currTable};")
+		fill_rows(f"SELECT * FROM {current_table};")
 
-def clearDb():
-	"""Drops Database
+
+def clear_DB():
 	"""
-	controller.clear()
-	refreshTrees()
+		Drops (clears) Database
+	"""
+	controller.clear_DB()
+	present_new_trees()
 	error_label.config(text=success_msgs["clear_db"], anchor=CENTER)
 
-def dropTable():
-	"""Drop the current table
+
+def drop_table() -> None:
+	"""
+		Drop the current table (clears window of table)
 	"""
 	global tables_tree
 	if selected_table:
-		controller.dropTable(selected_table)
-		refreshTrees()
+		controller.drop_selected_table(selected_table)
+		present_new_trees()
 		error_label.config(text=success_msgs["drop_tbl"], fg='#20B519', anchor=CENTER)
 	else:
 		error_label.config(text=err_msgs["no_tbl_selected"], fg='#D93232', anchor=CENTER)
 
-def open_drop_tbl_popup():
+
+def drop_table_popup() -> None:
+	"""
+		Pop up window to confirm the users action
+	"""
+
 	if not selected_table:
 		error_label.config(text=err_msgs["no_tbl_selected"], fg='#D93232', anchor=CENTER)
 		return
 
-	MsgBox = messagebox.askquestion(f'Drop Table {selected_table} ',warn_msgs["drop_tbl_warning"],
-									   icon='warning')
-	if MsgBox == 'yes':
-		dropTable()
+	message = messagebox.askquestion(f'Drop Table {selected_table} ', warn_msgs["drop_tbl_warning"],
+									icon='warning')
+	if message == 'yes':
+		drop_table()
 
 
-def open_drop_db_popup():
-	MsgBox = messagebox.askquestion('WARNING! - Drop Data Base', warn_msgs["drop_db_warning"],
-									   icon='warning')
-	if MsgBox == 'yes':
-		clearDb()
+def drop_db_popup() -> None:
+	"""
+		Pop up window to confirm the users action
+	"""
+	message = messagebox.askquestion('WARNING! - Drop Data Base',
+									warn_msgs["drop_db_warning"],
+									icon='warning')
+	if message == 'yes':
+		clear_DB()
 
-def open_delete_row_popup():
+
+def delete_row_popup() -> None:
+	"""
+		Pop up window to confirm the users action
+	"""
 	if not selected_table:
 		error_label.config(text=err_msgs["row_dlt_no_tbl"], fg='#D93232', anchor=CENTER)
 		return
 	if not selected_cell:
 		error_label.config(text=err_msgs["no_row_selected"], fg='#D93232', anchor=CENTER)
 		return
-	MsgBox = messagebox.askquestion('Delete Row', warn_msgs["row_delete_warning"], icon='warning')
-	if MsgBox == 'yes':
-		deleteRow()
+	message = messagebox.askquestion('Delete Row', warn_msgs["row_delete_warning"],
+									icon='warning')
+	if message == 'yes':
+		delete_entire_row()
 
 
-def refreshTrees():
-	"""Refresh and reshow all tables in the gui based on real time information.
+def present_new_trees() -> None:
+	"""
+		Refresh and present all tables in the GUI based on updated information.
 	"""
 	import_tables()
 	select_table()
@@ -429,17 +452,19 @@ def restore_db():
 
 
 @error_decorator
-def deleteRow():
-	"""Deletes the selected row
+def delete_entire_row() -> None:
+	"""
+		Deletes the selected row
 	"""
 	global edit_frame
+
 	if selected_table is not None and selected_cell is not None:
 		if len(selected_row_id) == 2:
 			cond = selected_row_id[1]
 		elif len(selected_row_id) == 4:
 			cond = [selected_row_id[1], selected_row_id[3]]
-		controller.deleteRowFromTable(selected_table, cond)
-		refreshTrees()
+		controller.delete_row_in_table(selected_table, cond)
+		present_new_trees()
 		edit_frame.grab_release()
 		edit_frame.destroy()
 		error_label.config(text=success_msgs["delete_row"], fg='#20B519', anchor=CENTER)
@@ -447,16 +472,17 @@ def deleteRow():
 		error_label.config(text=err_msgs["row_dlt_no_tbl"], fg='#D93232', anchor=CENTER)
 
 @error_decorator
-def createInputRowWindow():
-	"""Create an input window in order to collect information to add a new row to the current table.
+def input_row_info_window() -> None:
+	"""
+		Create an input window which enables the user to change rows information.
 	"""
 	if edit_frame:
 		clear_edit_frame()
 	if selected_table is not None and not selected_cell:
-		columns = controller.getTableColumns(selected_table)
+		columns = controller.get_all_columns(selected_table)
 		if len(columns) > 0:
 			entries = bottom_frame_insert(columns)
-			Button_c("Insert new row", lambda: addRowToTable(entries, edit_frame), 0, frame=edit_frame)
+			Button_c("Insert new row", lambda: insert_new_row_to_table(entries, edit_frame), 0, frame=edit_frame)
 		else:
 			error_label.config(text=err_msgs["empty_table"], fg='#D93232', anchor=CENTER)
 	elif selected_cell:
@@ -465,45 +491,47 @@ def createInputRowWindow():
 		error_label.config(text=err_msgs["row_add_no_tbl"], fg='#D93232', anchor=CENTER)
 
 
-def return_to_default():
+def return_to_default() -> None:
 	global selected_table
 	if selected_table:
 		selected_table = None
-	refreshTrees()
-	
-	
-@error_decorator
-def addRowToTable(entries, window_to_close):
-	"""collect information to add a new row to the current table.
+	present_new_trees()
 
-	Args:
-		entries (dictionary): every entry that can be entered to a row in the current table
-		windowToDestroy (Toplevel): The window that we'll destroy after adding the new row
+
+@error_decorator
+def insert_new_row_to_table(entries: dict, window_to_close) -> None:
+	"""
+		Collect information to add a new row to the current table.
+
+		Args:
+			entries: every entry that can be entered to a row in the current table
+			window_to_close: The window that we'll destroy after adding the new row
 	"""
 	if not selected_cell:
 		columns = []
 		values = []
-		for c, e in entries.items():
-			columns.append(c)
-			values.append(e())
-		remove_indexes = [i for i, v in enumerate(values) if v == '']
-		for i in sorted(remove_indexes, reverse=True):
-			del columns[i]
-			del values[i]
+		for column, entry in entries.items():
+			columns.append(column)
+			values.append(entry())
+		remove_indexes = [index for index, value in enumerate(values) if value == '']
+		for index in sorted(remove_indexes, reverse=True):
+			del columns[index]
+			del values[index]
 
-		for i, c in enumerate(columns):
-			if controller.check_if_quotes_needed(select_table, c):
-				values[i] = f'"{values[i]}"'
-		controller.insertRowToTable(select_table, columns, values)
+		for index, column in enumerate(columns):
+			if controller.check_if_quotes_needed(select_table, column):
+				values[index] = f'"{values[index]}"'
+		controller.insert_new_row_to_table(select_table, columns, values)
 		window_to_close.grab_release()
 		window_to_close.destroy()
-		refreshTrees()
+		present_new_trees()
 		error_label.config(text=success_msgs["row_insert"], fg='#20B519', anchor=CENTER)
 
 
-def init_buttons():
-	functions = [open_delete_row_popup, createInputRowWindow, open_drop_db_popup, open_drop_tbl_popup,return_to_default]
-	texts = ["Delete Row", "Add New Row", "Drop DataBase", "Drop Table", 'Default View']
+def init_buttons() -> None:
+	functions = [delete_row_popup, input_row_info_window, drop_db_popup, restore_db, drop_table_popup,
+				 return_to_default]
+	texts = ["Delete Row", "Add New Row", "Drop DataBase", "Restore DataBase", "Drop Table", 'Default View']
 	i = 1
 	for text, func in zip(texts, functions):
 		Button_c(text, func, i, frame=buttons_frame)
@@ -511,7 +539,7 @@ def init_buttons():
 
 
 if __name__ == "__main__":
-	initWindowAndConnection()
+	init_frames()
 	init_buttons()
 	init_rows_tree()
 	init_tables_tree()
