@@ -16,7 +16,7 @@ tablesCreationSQL = {
 	"invoice_items": f"CREATE TABLE IF NOT EXISTS invoice_items (InvoiceLineId INTEGER,InvoiceId INTEGER,TrackId INTEGER,UnitPrice REAL,Quantity INTEGER, FOREIGN KEY (InvoiceId) references invoices(InvoiceId), FOREIGN KEY (TrackId) references tracks(TrackId), PRIMARY KEY(InvoiceLineId));",
 }
 
-tablesWhereSQL = {
+tables_where_SQL = {
 	"customers": "CustomerId",
 	"playlists": "PlaylistId",
 	"artists": "ArtistId",
