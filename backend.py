@@ -30,7 +30,7 @@ class DataController:
 				ValueError: Could not clear our database file.
 		"""
 		try:
-			for key in constants.tables_where_SQL.keys():
+			for key in constants.primary_key_dict.keys():
 				self.cursor.execute(f"DROP TABLE IF EXISTS {key}")
 			self.conn.commit()
 		except Error as e:
@@ -64,9 +64,9 @@ class DataController:
 		try:
 			if type(value) is int:
 				self.cursor.execute(
-					f"DELETE FROM {table} WHERE {constants.tables_where_SQL[table]} = {value}")
+					f"DELETE FROM {table} WHERE {constants.primary_key_dict[table]} = {value}")
 			elif len(value) == 2:
-				keys = constants.tables_where_SQL[table].split()
+				keys = constants.primary_key_dict[table].split()
 				self.cursor.execute(
 					f"DELETE FROM {table} WHERE {keys[0]} = {value[0]} AND {keys[1]} = {value[1]}")
 			else:
@@ -107,7 +107,9 @@ class DataController:
 			Returns:
 				Boolean
 		"""
-		variables = constants.SQL_table_creation[table]
+
+		variables = constants.quotes_check_dict[table]
+		print(variables)
 		if variables[variables.index(f'{variable} '):].startswith(f'{variable} NVARCHAR'):
 			return True
 		if variables[variables.index(f'{variable} '):].startswith(f'{variable} DATETIME'):
@@ -140,7 +142,7 @@ class DataController:
 			Returns:
 				list(str): all the predetermined tables' names.
 		"""
-		return constants.SQL_table_creation.keys()
+		return constants.quotes_check_dict.keys()
 	
 	def get_all_tables(self) -> list:
 		"""
