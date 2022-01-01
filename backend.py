@@ -1,5 +1,4 @@
 import sqlite3
-import csv
 import constants
 from sqlite3 import Error
 
@@ -8,55 +7,26 @@ class DataController:
 	"""
 		Class that controls all backend data
 	"""
-	def __init__(self, db_file: str) -> None:
+	def __init__(self, database_path: str) -> None:
 		"""
-			Initialize class object and establishing connection to the DB file.
+			Connecting to our database with the relevant path.
 			Args:
-				db_file: Database file path location
+				database_path: Database file path location
 			Raises:
-				Error: Could not initialize a database connection from db_file
+				Error if could not connect to our database
 		"""
 		try:
-			self.conn = sqlite3.connect(db_file)
+			self.conn = sqlite3.connect(database_path)
 			self.cursor = self.conn.cursor()
 		except Error as e:
-			raise Error(f"Could not initialize a database connection from file {db_file} - ", e)
-	
-	def clear_DB(self) -> None:
-		"""
-			Clears our database file.
+			raise Error(f"Could not connect to database: {database_path} - ", e)
 
-			Raises:
-				ValueError: Could not clear our database file.
+	def delete_selected_row_in_table(self, table_name: str, value: str) -> None:
 		"""
-		try:
-			for key in constants.primary_key_dict.keys():
-				self.cursor.execute(f"DROP TABLE IF EXISTS {key}")
-			self.conn.commit()
-		except Error as e:
-			raise ValueError(f"Could not clear the database - ", e)
-	
-	def drop_selected_table(self, table: str) -> None:
-		"""
-			Drop the table from our database.
+			Deletes the selected row from the picked table
 			Args:
-				table (str): The name of the table that we wish to drop.
-			Raises:
-				ValueError: In case the table wasn't found or any other reason the table couldn't have been dropped.
-		"""
-		try:
-			self.cursor.execute(f"DROP TABLE IF EXISTS {table}")
-			self.conn.commit()
-		except Error as e:
-			raise ValueError(f"Could not drop table {table} - ", e)
-
-	def delete_row_in_table(self, table: str, value: str) -> None:
-		"""
-			Deleted the row that applies primary key = {value} from {table}. If there are multiple primary keys, it checks all of them
-			Args:
-				table: table's name
-				value: the value that primary key should be equal to
-
+				table_name: table's name
+				value: the PK of the table
 			Raises:
 				ValueError: When deleting a row, an INTEGER id OR a list with two ids are needed.
 				Exception: Could not delete row with primary key = {value} in {table}
@@ -64,31 +34,31 @@ class DataController:
 		try:
 			if type(value) is int:
 				self.cursor.execute(
-					f"DELETE FROM {table} WHERE {constants.primary_key_dict[table]} = {value}")
+					f"DELETE FROM {table_name} WHERE {constants.primary_key_dict[table_name]} = {value}")
 			elif len(value) == 2:
-				keys = constants.primary_key_dict[table].split()
+				keys = constants.primary_key_dict[table_name].split()
 				self.cursor.execute(
-					f"DELETE FROM {table} WHERE {keys[0]} = {value[0]} AND {keys[1]} = {value[1]}")
+					f"DELETE FROM {table_name} WHERE {keys[0]} = {value[0]} AND {keys[1]} = {value[1]}")
 			else:
 				raise ValueError("When deleting a row, an INTEGER id OR a list with two ids are needed.")
 			self.conn.commit()
 		except Error as e:
-			raise Exception(f"Could not delete row with primary key = {value} in table {table} - ", e)
-	
-	def insert_new_row_to_table(self, table: str, columns: list, values: list) -> None:
-		"""Inserts a new row with {values} in {columns} to {table}
+			raise Exception(f"Could not delete row with primary key = {value} in table {table_name} - ", e)
 
-		Args:
-			table (str): table's name
-			columns (list(str)): columns to add
-			values (list(str)): values to add
-		Raises:
-			ValueError: Primary key must be unique!
-			ValueError: Please enter correct input"
+	def add_new_row_to_table(self, table_name: str, table_columns: list, row_values: list) -> None:
+		"""
+			Adds a new row the table with users input.
+			Args:
+				table_name : table's name
+				table_columns: which columns are relevant for the addition of the new row
+				row_values: values of the given new row
+			Raises:
+				ValueError: Primary key must be unique!
+				ValueError: Please enter correct input
 		"""
 		try:
 			self.cursor.execute(
-				f"INSERT INTO {table} ({','.join(columns)}) VALUES ({','.join(values)});")
+				f"INSERT INTO {table_name} ({','.join(table_columns)}) VALUES ({','.join(row_values)});")
 			self.conn.commit()
 		except Error as e:
 			if e.args[0].startswith('UNIQUE'):
@@ -96,45 +66,68 @@ class DataController:
 			else:
 				raise ValueError(f"Invalid input! Make sure you entered valid TYPE")
 
+	def drop_database(self) -> None:
+		"""
+			Disconnects from database
+			Raises:
+				ValueError: Could not disconnect from our database.
+		"""
+		try:
+			for key in constants.primary_key_dict.keys():
+				self.cursor.execute(f"DROP TABLE IF EXISTS {key}")
+			self.conn.commit()
+		except Error as e:
+			raise ValueError(f"Couldn't disconnect from database - ", e)
+
+	def drop_selected_table(self, table_name: str) -> None:
+		"""
+			Deletes the selected table from our database.
+			Args:
+				table_name: The name of the selected table to be dropped after execution
+			Raises:
+				ValueError: Selected table couldn't be dropped.
+		"""
+		try:
+			self.cursor.execute(f"DROP TABLE IF EXISTS {table_name}")
+			self.conn.commit()
+		except Error as e:
+			raise ValueError(f"Could not drop table {table_name} - ", e)
+
 	def check_if_quotes_needed(self, table: str, variable: str) -> bool:
 		"""
-			Checks if var is instance of str or datetime in {table}
-
+			Checks the variable type (NVARCHAR or DATETIME) inorder to add quotes
 			Args:
 				table: table's name
 				variable: variable's name
-
 			Returns:
-				Boolean
+				True or false according to the variable
 		"""
+		vars = constants.quotes_check_dict[table]
 
-		variables = constants.quotes_check_dict[table]
-		print(variables)
-		if variables[variables.index(f'{variable} '):].startswith(f'{variable} NVARCHAR'):
+		if vars[vars.index(f'{variable} '):].startswith(f'{variable} NVARCHAR'):
 			return True
-		if variables[variables.index(f'{variable} '):].startswith(f'{variable} DATETIME'):
+		if vars[vars.index(f'{variable} '):].startswith(f'{variable} DATETIME'):
 			return True
 		return False
 	
-	def update_selected_row(self, table: str, condition: str, value: str) -> None:
+	def update_selected_row(self, table_name: str, sql_cond: str, value: str) -> None:
 		"""
-			Updates {value} in all rows that apply {condition} in {table}.
-
+			Updating the selected row with input value from user to the table
 			Args:
-				table: table's name.
-				condition: the condition with which we find the wanted rows.
-				value: the new value that we wish to update.
+				table_name: relevant table that the row is contained in
+				sql_cond: will be used inside the WHERE field of the SQL query
+				value: The given value to be updated
 
 			Raises:
-				ValueError: Can't change primary key.
+				ValueError: Not allowed to change PK
 		"""
 		try:
 			self.cursor.execute(
-				f"UPDATE {table} SET {value} WHERE {condition};"
+				f"UPDATE {table_name} SET {value} WHERE {sql_cond};"
 			)
 			self.conn.commit()
 		except Error as e:
-			raise ValueError("Could Not Change Primary Key.")
+			raise ValueError("Not allowed to change PK!")
 	
 	def get_pred_table(self) -> list:
 		"""
@@ -146,26 +139,22 @@ class DataController:
 	
 	def get_all_tables(self) -> list:
 		"""
-			Get a list of all the predetermined that are currently in our DB.
-
+			Retrieves all the tables that are contained in our database
 			Returns:
-				list(str): all the predetermined that are currently in our DB.
+				list(str): all the tables that are contained in our database
 		"""
 		self.cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';")
 		return self.cursor.fetchall()
-	
+
 	def get_all_columns(self, table: str) -> list:
 		"""
-			Return all columns from selected table.
-
+			Retrieves all of the columns that the selected table has
 			Args:
-				table (str): table's name.
-
+				table (str): The selected table's name.
 			Raises:
-				ValueError: If could not return all columns from selected table.
-
+				ValueError: Couldn't retrieve table's columns
 			Returns:
-				list: all columns from selected table.
+				list: Contains the columns of the selected table.
 		"""
 		try:
 			if (table,) not in self.get_all_tables():
@@ -174,10 +163,11 @@ class DataController:
 			description = self.cursor.description
 			return [des[0] for des in description]
 		except Error as e:
-			raise ValueError(f"Could not get table ({table})'s columns - ", e)
+			raise ValueError(f"Couldn't retrieve the table ({table})'s columns - ", e)
 	
-	def stop_connection(self):
-		"""Drops the connection to our DB file.
+	def stop_connection(self) -> None:
+		"""
+			Upon calling - stops the connection with our database
 		"""
 		self.conn.close()
 

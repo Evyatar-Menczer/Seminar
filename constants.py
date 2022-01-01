@@ -38,7 +38,6 @@ error_messages = {
 	"no_row_selected":"In order to drop a row, you need to select a table first",
 	"uncheck_before_insret":"Please un-check selected row before inserting a new row",
 	"row_add_no_tbl":"In order to add a row, you need to select a table first"
-
 }
 
 success_messages = {
