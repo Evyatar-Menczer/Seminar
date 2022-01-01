@@ -93,7 +93,7 @@ class DataController:
 		except Error as e:
 			raise ValueError(f"Could not drop table {table_name} - ", e)
 
-	def check_if_quotes_needed(self, table: str, variable: str) -> bool:
+	def check_if_quotes_needed(self, table: str, variable: str) -> int:
 		"""
 			Checks the variable type (NVARCHAR or DATETIME) inorder to add quotes
 			Args:
@@ -103,12 +103,16 @@ class DataController:
 				True or false according to the variable
 		"""
 		vars = constants.quotes_check_dict[table]
-
+		print(variable)
 		if vars[vars.index(f'{variable} '):].startswith(f'{variable} NVARCHAR'):
-			return True
+			return 1
 		if vars[vars.index(f'{variable} '):].startswith(f'{variable} DATETIME'):
-			return True
-		return False
+			return 1
+		if vars[vars.index(f'{variable} '):].startswith(f'{variable} REAL'):
+			return 2
+		if vars[vars.index(f'{variable} '):].startswith(f'{variable} INTEGER'):
+			return 2
+		return 0
 	
 	def update_selected_row(self, table_name: str, sql_cond: str, value: str) -> None:
 		"""
