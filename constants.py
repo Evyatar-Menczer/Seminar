@@ -35,7 +35,7 @@ error_messages = {
 	"empty_table": "Table Has No Columns!",
 	"no_tbl_selected":"In order to drop a table, you need to select a table first",
 	"row_dlt_no_tbl":"In order to delete a row, you need to select a table first",
-	"no_row_selected":"In order to drop a row, you need to select a table first",
+	"no_row_selected":"In order to drop a row, you need to select a row first",
 	"uncheck_before_insret":"Please un-check selected row before inserting a new row",
 	"row_add_no_tbl":"In order to add a row, you need to select a table first",
 	"db_connection" : "Couldn't connect to database: ",
