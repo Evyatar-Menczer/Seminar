@@ -43,7 +43,7 @@ error_messages = {
 
 success_messages = {
 	"edit_completed":"Edit Completed Successfully",
-	"clear_db": "Cleared DB Successfully",
+	"drop_db": "Cleared DB Successfully",
 	"drop_tbl":"Dropped Table Successfully",
 	"delete_row":"Deleted Row Successfully",
 	"row_insert":"Row Inserted Successfully"

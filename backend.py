@@ -22,7 +22,7 @@ class DataController:
 		except Error as e:
 			raise Error(f"Could not initialize a database connection from file {db_file} - ", e)
 	
-	def clear_DB(self) -> None:
+	def drop_DB(self) -> None:
 		"""
 			Clears our database file.
 
