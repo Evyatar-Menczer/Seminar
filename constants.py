@@ -42,7 +42,7 @@ error_messages = {
 	"wrong_id_dlt" : "Not sufficient id's. An INTEGER is needed, or List with 2 ids",
 	"row_dlt_err": "Could not delete row with primary key",
 	"duplicate_ids": "This id (Primary Key) already exists. Primary key must be unique",
-	"invalid_input": "Invalid input. Make sure you entered a valid TYPE",
+	"invalid_input": "Invalid input. Make sure you entered a valid TYPE, or filled an Id field",
 	"disonnect_err" : "Couldn't disconnect from database - ",
 	"drop_tbl_err" : "Couldn't drop table",
 	"pk_update" : "Primary Keys are unchangable"
