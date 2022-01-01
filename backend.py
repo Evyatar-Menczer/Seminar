@@ -1,7 +1,7 @@
 import sqlite3
 import constants
 from sqlite3 import Error
-
+from constants import error_messages as err
 
 class DataController:
 	"""
@@ -19,7 +19,7 @@ class DataController:
 			self.conn = sqlite3.connect(database_path)
 			self.cursor = self.conn.cursor()
 		except Error as e:
-			raise Error(f"Could not connect to database: {database_path} - ", e)
+			raise Error(f"{err['db_connection']}{database_path} - ", e)
 
 	def delete_selected_row_in_table(self, table_name: str, value: str) -> None:
 		"""
@@ -40,10 +40,10 @@ class DataController:
 				self.cursor.execute(
 					f"DELETE FROM {table_name} WHERE {keys[0]} = {value[0]} AND {keys[1]} = {value[1]}")
 			else:
-				raise ValueError("When deleting a row, an INTEGER id OR a list with two ids are needed.")
+				raise ValueError(err["wrong_id_dlt"])
 			self.conn.commit()
 		except Error as e:
-			raise Exception(f"Could not delete row with primary key = {value} in table {table_name} - ", e)
+			raise Exception(f" {err['row_dlt_err']}: '{value}' , in table: '{table_name}' - ", e)
 
 	def add_new_row_to_table(self, table_name: str, table_columns: list, row_values: list) -> None:
 		"""
@@ -56,15 +56,16 @@ class DataController:
 				ValueError: Primary key must be unique!
 				ValueError: Please enter correct input
 		"""
+
 		try:
 			self.cursor.execute(
 				f"INSERT INTO {table_name} ({','.join(table_columns)}) VALUES ({','.join(row_values)});")
 			self.conn.commit()
 		except Error as e:
 			if e.args[0].startswith('UNIQUE'):
-				raise ValueError(f"Primary key must be unique!")
+				raise ValueError(err["duplicate_ids"])
 			else:
-				raise ValueError(f"Invalid input! Make sure you entered valid TYPE")
+				raise ValueError(err['invalid_input'])
 
 	def drop_database(self) -> None:
 		"""
@@ -77,7 +78,7 @@ class DataController:
 				self.cursor.execute(f"DROP TABLE IF EXISTS {key}")
 			self.conn.commit()
 		except Error as e:
-			raise ValueError(f"Couldn't disconnect from database - ", e)
+			raise ValueError(err['disonnect_err'], e)
 
 	def drop_selected_table(self, table_name: str) -> None:
 		"""
@@ -91,7 +92,7 @@ class DataController:
 			self.cursor.execute(f"DROP TABLE IF EXISTS {table_name}")
 			self.conn.commit()
 		except Error as e:
-			raise ValueError(f"Could not drop table {table_name} - ", e)
+			raise ValueError(f"{err['drop_tbl_err']} {table_name} - ", e)
 
 	def check_if_quotes_needed(self, table: str, variable: str) -> bool:
 		"""
@@ -127,7 +128,7 @@ class DataController:
 			)
 			self.conn.commit()
 		except Error as e:
-			raise ValueError("Not allowed to change PK!")
+			raise ValueError(err['pk_update'])
 	
 	def get_pred_table(self) -> list:
 		"""
@@ -173,5 +174,5 @@ class DataController:
 
 
 if __name__ == "__main__":
-	m = DataController(constants.DATA_BASE)
-	m.stop_connection()
+	data_base = DataController(constants.DATA_BASE)
+	data_base.stop_connection()

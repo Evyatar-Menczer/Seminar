@@ -37,7 +37,15 @@ error_messages = {
 	"row_dlt_no_tbl":"In order to delete a row, you need to select a table first",
 	"no_row_selected":"In order to drop a row, you need to select a table first",
 	"uncheck_before_insret":"Please un-check selected row before inserting a new row",
-	"row_add_no_tbl":"In order to add a row, you need to select a table first"
+	"row_add_no_tbl":"In order to add a row, you need to select a table first",
+	"db_connection" : "Couldn't connect to database: ",
+	"wrong_id_dlt" : "Not sufficient id's. An INTEGER is needed, or List with 2 ids",
+	"row_dlt_err": "Could not delete row with primary key",
+	"duplicate_ids": "This id (Primary Key) already exists. Primary key must be unique",
+	"invalid_input": "Invalid input. Make sure you entered a valid TYPE",
+	"disonnect_err" : "Couldn't disconnect from database - ",
+	"drop_tbl_err" : "Couldn't drop table",
+	"pk_update" : "Primary Keys are unchangable"
 }
 
 success_messages = {
