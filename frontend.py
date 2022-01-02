@@ -324,7 +324,7 @@ def import_tables() -> None:
 	"""
 	for x in tables_tree.get_children():
 		tables_tree.delete(x)
-	
+
 	all_pred_tables = controller.get_pred_table()
 	controller.cursor.execute(constants.ALL_TABLES_QUERY)
 	current_tables = controller.cursor.fetchall()
@@ -471,7 +471,7 @@ def delete_entire_row() -> None:
 @msg_decorator
 def add_new_row() -> None:
 	"""
-			Create an input window which enables the user to change rows information.
+			Create an input section which enables the user to change a rows information.
 	"""
 	if edit_frame:
 		clear_edit_frame()
@@ -513,7 +513,6 @@ def insert_new_row_to_table(entries: dict, close_frame) -> None:
 	# 	del columns[index]
 	#
 	# 	values[index] = ' '
-	print(values)
 	for index, column in enumerate(columns):
 		if controller.check_if_quotes_needed(selected_table, column):
 			values[index] = f'"{values[index]}"'
@@ -528,10 +527,26 @@ def insert_new_row_to_table(entries: dict, close_frame) -> None:
 		text=success_msgs["row_insert"], fg='#20B519', anchor=CENTER)
 
 
+def create_database() -> None:
+	"""
+		After the database (or a specific table) has been dropped, enables the user to create the database (or table)
+		from scratch
+	"""
+	all_pred_tables = controller.get_pred_table()
+	for sql_cmnd in all_pred_tables:
+		controller.cursor.execute(constants.quotes_check_dict[sql_cmnd])
+	for row in all_pred_tables:
+		try:
+			tables_tree.insert('', 'end', values=row, tags=('exists',))
+		except Exception as error:
+			messagebox.showerror("Error", error)
+	present_new_trees()
+
+
+
 def init_buttons() -> None:
-	functions = [delete_row_popup, add_new_row, drop_db_popup, drop_table_popup, return_to_default]
-	texts = ["Delete Row", "Add New Row",
-	         "Drop DataBase", "Drop Table", 'Default View']
+	functions = [delete_row_popup, add_new_row, drop_db_popup, create_database, drop_table_popup, return_to_default]
+	texts = ["Delete Row", "Add New Row", "Drop DataBase", "Create DataBase", "Drop Table", 'Default View']
 	i = 1
 	for text, func in zip(texts, functions):
 		ButtonCustom(text, func, i, frame=buttons_frame)

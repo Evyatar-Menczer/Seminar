@@ -3,6 +3,7 @@ import constants
 from sqlite3 import Error
 from constants import error_messages as err
 
+
 class DataController:
 	"""
 		Class that controls all backend data
@@ -104,7 +105,6 @@ class DataController:
 				True or false according to the variable
 		"""
 		vars = constants.quotes_check_dict[table]
-		print(variable)
 		if vars[vars.index(f'{variable} '):].startswith(f'{variable} NVARCHAR'):
 			return 1
 		if vars[vars.index(f'{variable} '):].startswith(f'{variable} DATETIME'):
@@ -176,6 +176,8 @@ class DataController:
 		"""
 		self.conn.close()
 
+	def load_database(self):
+		self.__init__('./chinook.db')
 
 if __name__ == "__main__":
 	data_base = DataController(constants.DATA_BASE)
