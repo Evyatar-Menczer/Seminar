@@ -46,7 +46,8 @@ error_messages = {
 	"invalid_input": "Invalid input. Make sure you entered a valid TYPE, or filled an Id field",
 	"disonnect_err" : "Couldn't disconnect from database - ",
 	"drop_tbl_err" : "Couldn't drop table",
-	"pk_update" : "Primary Keys are unchangable"
+	"pk_update" : "Primary Keys are unchangable",
+	"db_dropped" : "No data base. Can't perform this action"
 }
 
 success_messages = {
@@ -54,11 +55,13 @@ success_messages = {
 	"clear_db": "Cleared DB Successfully",
 	"drop_tbl":"Dropped Table Successfully",
 	"delete_row":"Deleted Row Successfully",
-	"row_insert":"Row Inserted Successfully"
+	"row_insert":"Row Inserted Successfully",
+	"creat_tbl" : "Created Table Successfully"
 }
 
 warning_messages = {
 	"drop_tbl_warning":"Are you sure you want to drop this table ?",
 	"drop_db_warning":"All tables will be deleted.\nAre you sure you want to drop the database?",
-	"row_delete_warning":"Are you sure you want to delete the selected row?"
+	"row_delete_warning":"Are you sure you want to delete the selected row?",
+	"create_tbl_warning" :"Please select the table you want to re-create"
 }

@@ -20,7 +20,6 @@ class DataController:
 		try:
 			self.conn = sqlite3.connect(database_path)
 			self.cursor = self.conn.cursor()
-			self.drop_dict = {}
 		except Error as e:
 			raise Error(f"{err['db_connection']}{database_path} - ", e)
 		
@@ -101,7 +100,6 @@ class DataController:
 		"""
 		try:
 			for key in constants.primary_key_dict.keys():
-				self.drop_dict[key] = False
 				self.cursor.execute(f"DROP TABLE IF EXISTS {key}")
 			self.conn.commit()
 		except Error as e:
