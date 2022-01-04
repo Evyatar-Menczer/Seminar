@@ -1,6 +1,8 @@
 from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox
+import pandas as pd
+import csv
 import backend
 import constants
 from constants import error_messages as err_msgs
@@ -8,7 +10,7 @@ from constants import success_messages as success_msgs
 from constants import warning_messages as warn_msgs
 
 root = Tk()
-root.minsize(1200, 800)
+root.minsize(1300, 800)
 controller = backend.DataController('./chinook.db')
 
 selected_table = None
@@ -283,6 +285,8 @@ def select_table_row(event) -> None:
 					event (event): the event when pressing on a row in the table
 	"""
 	global selected_cell, selected_row_id
+	if not selected_table:
+		return
 	if selected_cell:
 		clear_edit_frame()
 	current_item = rows_tree.item(rows_tree.focus())['values']
@@ -330,6 +334,7 @@ def import_tables() -> None:
 	current_tables = controller.cursor.fetchall()
 	for row in all_pred_tables:
 		try:
+			controller.drop_dict[row] = True
 			if (row,) in current_tables:
 				tables_tree.insert('', 'end', values=row, tags=('exists',))
 			else:
@@ -376,18 +381,26 @@ def clear_database():
 	"""
 		Drops (clears) Database
 	"""
-	controller.drop_database()
-	present_new_trees()
-	error_label.config(text=success_msgs["clear_db"], anchor=CENTER)
-
+	try:
+		global selected_table, selected_cell
+		controller.drop_database()
+		selected_table = None
+		selected_cell = None
+		present_new_trees()
+		error_label.config(text=success_msgs["clear_db"], anchor=CENTER)
+	except Exception as e:
+		error_label.config(text=f'Could not clean DB - {e}')
+		
 
 def drop_table() -> None:
 	"""
 			Drop the current table (clears section that presents the selected table)
 	"""
-	global tables_tree
+	global tables_tree, selected_table, selected_cell
 	if selected_table:
 		controller.drop_selected_table(selected_table)
+		selected_table = None
+		selected_cell = None
 		present_new_trees()
 		error_label.config(text=success_msgs["drop_tbl"], fg='#20B519', anchor=CENTER)
 	else:
@@ -509,10 +522,6 @@ def insert_new_row_to_table(entries: dict, close_frame) -> None:
 		columns.append(column)
 		values.append(entry())
 	remove_indexes = [index for index, value in enumerate(values) if value == '']
-	# for index in sorted(remove_indexes, reverse=True):
-	# 	del columns[index]
-	#
-	# 	values[index] = ' '
 	for index, column in enumerate(columns):
 		if controller.check_if_quotes_needed(selected_table, column):
 			values[index] = f'"{values[index]}"'
@@ -533,20 +542,23 @@ def create_database() -> None:
 		from scratch
 	"""
 	all_pred_tables = controller.get_pred_table()
-	for sql_cmnd in all_pred_tables:
-		controller.cursor.execute(constants.quotes_check_dict[sql_cmnd])
-	for row in all_pred_tables:
-		try:
-			tables_tree.insert('', 'end', values=row, tags=('exists',))
-		except Exception as error:
-			messagebox.showerror("Error", error)
+	for table in all_pred_tables:
+		controller.create_table_from_csv(table)
 	present_new_trees()
+	
 
+def create_table():
+	if selected_table:
+		controller.create_table_from_csv(selected_table)
+		present_new_trees()
+	else:
+		error_label.config(text='Please select table')
+		pass
 
 
 def init_buttons() -> None:
-	functions = [delete_row_popup, add_new_row, drop_db_popup, create_database, drop_table_popup, return_to_default]
-	texts = ["Delete Row", "Add New Row", "Drop DataBase", "Create DataBase", "Drop Table", 'Default View']
+	functions = [delete_row_popup, add_new_row, drop_db_popup, drop_table_popup, return_to_default, create_database, create_table]
+	texts = ['Delete Row', 'Add New Row', 'Drop DataBase', 'Drop Table', 'Default View', 'Create DataBase', 'Create Table']
 	i = 1
 	for text, func in zip(texts, functions):
 		ButtonCustom(text, func, i, frame=buttons_frame)

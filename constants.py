@@ -1,6 +1,7 @@
 DATA_BASE = 'chinook.db'
 ALL_TABLES_QUERY = "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';"
 BUTTON_PADX = 10
+CSV_FOLDER = 'csv_folder/'
 
 quotes_check_dict = {
 	"genres": "CREATE TABLE IF NOT EXISTS genres (GenreId INTEGER,Name NVARCHAR(120), PRIMARY KEY(GenreId));",

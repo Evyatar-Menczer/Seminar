@@ -1,5 +1,6 @@
 import sqlite3
 import constants
+import csv
 from sqlite3 import Error
 from constants import error_messages as err
 
@@ -19,9 +20,33 @@ class DataController:
 		try:
 			self.conn = sqlite3.connect(database_path)
 			self.cursor = self.conn.cursor()
+			self.drop_dict = {}
 		except Error as e:
 			raise Error(f"{err['db_connection']}{database_path} - ", e)
-
+		
+	def create_table_from_csv(self, selected_table):
+		"""
+			Create the selected table from csv
+			Args:
+				selected_table: table's name to create
+			Raises:
+				Exception: Could not create the specific table
+		"""
+		try:
+			self.cursor.execute(constants.quotes_check_dict[selected_table])
+			with open(f'{constants.CSV_FOLDER}{selected_table}.csv', 'r', encoding="utf8") as csv_file:
+				dict_reader = csv.DictReader(csv_file)
+				to_db = []
+				for i in dict_reader:
+					del i["index"]
+					to_db.append(tuple(i.values()))
+			self.cursor.executemany(
+				f"INSERT OR IGNORE INTO {selected_table} VALUES ({','.join(['?'] * len(to_db[0]))});", to_db)
+			self.conn.commit()
+			
+		except Error as e:
+			raise Exception(f'Could not Create {selected_table} - {e}')
+		
 	def delete_selected_row_in_table(self, table_name: str, value: str) -> None:
 		"""
 			Deletes the selected row from the picked table
@@ -76,6 +101,7 @@ class DataController:
 		"""
 		try:
 			for key in constants.primary_key_dict.keys():
+				self.drop_dict[key] = False
 				self.cursor.execute(f"DROP TABLE IF EXISTS {key}")
 			self.conn.commit()
 		except Error as e:
