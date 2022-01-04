@@ -31,6 +31,25 @@ primary_key_dict = {
 	"invoice_items": "InvoiceLineId",
 }
 
+button_disable_dict = {
+	"on_table_select_deleted" : ['Delete Row', 'Add New Row', 'Drop Table'],
+	"on_table_select_enabled" : ['Create Table'],
+	"on_table_import" : ['Delete Row', 'Add New Row', 'Drop Table','Drop DataBase'],
+	"on_clear_DB" : ['Delete Row', 'Add New Row', 'Drop Table','Drop DataBase'],
+	"on_drop_table" : ['Delete Row', 'Add New Row', 'Drop Table'],
+	"on_create_DB" : ['Create DataBase'],
+	"on_create_table" : ['Create Table'],
+}
+
+button_enable_dict = {
+	"on_table_select_deleted" : ['Create Table'],
+	"on_table_select_enabled" : ['Delete Row', 'Add New Row', 'Drop Table'],
+	"on_drop_table" : ['Create Table','Create DataBase'],
+	"on_create_DB" : ['Delete Row', 'Add New Row', 'Drop Table','Drop DataBase'],
+	"on_create_table" : ['Delete Row', 'Add New Row', 'Drop Table','Drop DataBase'],
+	"on_clear_DB" : ['Create DataBase']
+
+}
 
 error_messages = {
 	"empty_table": "Table Has No Columns!",

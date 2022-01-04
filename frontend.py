@@ -8,6 +8,7 @@ import constants
 from constants import error_messages as err_msgs
 from constants import success_messages as success_msgs
 from constants import warning_messages as warn_msgs
+from constants import button_disable_dict,button_enable_dict
 
 root = Tk()
 root.minsize(1300, 800)
@@ -19,7 +20,10 @@ selected_row_id = None
 selected_cell = None
 db_dropped = False
 total_tables = 0
+
+#Buttons
 buttons = []
+create_button = None
 
 # Frames Definition:
 tables_frame = Frame(root, width=120)
@@ -50,6 +54,7 @@ class ButtonCustom:
 						btn_command: command to be executed upon click
 						frame: which frame the button will be placed. Defaults to root.
 		"""
+		self.text = btn_text
 		self.button = ttk.Button(frame, text=btn_text, command=btn_command)
 		self.button.grid(row=1, column=i, padx=constants.BUTTON_PADX, ipady=3, ipadx=10)
 
@@ -277,9 +282,11 @@ def select_table() -> None:
 	current_item = tables_tree.item(tables_tree.focus())['values']
 	tags = tables_tree.item(tables_tree.focus())['tags']
 	if 'deleted' in tags:
-		disable_buttons()
+		disable_buttons(button_disable_dict["on_table_select_deleted"])
+		enable_buttons(button_enable_dict["on_table_select_deleted"])
 	elif 'exists' in tags:
-		enable_buttons()
+		enable_buttons(button_enable_dict["on_table_select_enabled"])
+		disable_buttons(button_disable_dict["on_table_select_enabled"])
 	if current_item:
 		selected_table = current_item[0]
 		insert_table_rows(current_item[0])
@@ -302,7 +309,7 @@ def select_table_row(event) -> None:
 					event (event): the event when pressing on a row in the table
 	"""
 	global selected_cell, selected_row_id
-	if not selected_table:
+	if rows_tree.focus() == '':
 		return
 	if selected_cell:
 		clear_edit_frame()
@@ -362,7 +369,7 @@ def import_tables() -> None:
 		except Exception as error:
 			messagebox.showerror("Error", error)
 	if deleted_counter == total_tables:
-		disable_buttons()
+		disable_buttons(button_disable_dict["on_table_import"])
 
 @msg_decorator
 def fill_rows(sql: str) -> None:
@@ -383,9 +390,9 @@ def fill_rows(sql: str) -> None:
 @msg_decorator
 def insert_table_rows(current_table: str) -> None:
 	"""
-			Filling the specified columns of the selected table and afterwards filling the tables' rows.
-			Args:
-					current_table (str): Current table's name
+		Filling the specified columns of the selected table and afterwards filling the tables' rows.
+		Args:
+			current_table (str): Current table's name
 	"""
 	columns = tuple(controller.get_all_columns(current_table))
 	rows_tree["columns"] = columns
@@ -405,11 +412,10 @@ def clear_database():
 	try:
 		global selected_table, selected_cell
 		controller.drop_database()
-		selected_table = None
-		selected_cell = None
 		present_new_trees()
 		msg_label.config(text=success_msgs["clear_db"], fg='#20B519',anchor=CENTER)
-		disable_buttons()
+		disable_buttons(button_disable_dict["on_clear_DB"])
+		enable_buttons(button_enable_dict["on_clear_DB"])
 	except Exception as e:
 		msg_label.config(text=f'Could not clean DB - {e}')
 		
@@ -418,14 +424,13 @@ def drop_table() -> None:
 	"""
 			Drop the current table (clears section that presents the selected table)
 	"""
-	global tables_tree, selected_table, selected_cell
+	global tables_tree, selected_table, selected_cell,create_button
 
 	if selected_table:
 		controller.drop_selected_table(selected_table)
-		selected_table = None
-		selected_cell = None
 		present_new_trees()
-		disable_buttons()
+		disable_buttons(button_disable_dict["on_drop_table"])
+		enable_buttons(button_enable_dict["on_drop_table"])
 		msg_label.config(text=success_msgs["drop_tbl"], fg='#20B519', anchor=CENTER)
 	else:
 		msg_label.config(text=err_msgs["no_tbl_selected"], fg='#D93232', anchor=CENTER)
@@ -578,38 +583,44 @@ def create_database() -> None:
 	for table in all_pred_tables:
 		controller.create_table_from_csv(table)
 	present_new_trees()
-	enable_buttons()
+	disable_buttons(button_disable_dict["on_create_DB"])
+	enable_buttons(button_enable_dict["on_create_DB"])
 	
 
 def create_table():
 	if selected_table:
 		controller.create_table_from_csv(selected_table)
-		enable_buttons()
+		enable_buttons(button_enable_dict["on_create_table"])
+		disable_buttons(button_disable_dict["on_create_table"])
 		present_new_trees()
 		msg_label.config(text=success_msgs["creat_tbl"],fg='#20B519', anchor=CENTER)
 	else:
 		msg_label.config(text=warn_msgs["create_tbl_warning"],fg='#D93232', anchor=CENTER)
 		pass
 
-def disable_buttons():
-	for btn in buttons:
-		btn.button.state(["disabled"])
 
-def enable_buttons():
+def disable_buttons(btns):
+	global buttons
 	for btn in buttons:
-		btn.button.state(["!disabled"])
+		if btn.text in btns:
+			btn.button.state(["disabled"])
+
+
+def enable_buttons(btns):
+	global buttons
+	for btn in buttons:
+		if btn.text in btns:
+			btn.button.state(["!disabled"])
 
 
 def init_buttons() -> None:
-	global buttons
-	functions = [delete_row_popup, add_new_row, drop_db_popup, drop_table_popup, return_to_default, create_database, create_table]
-	texts = ['Delete Row', 'Add New Row', 'Drop DataBase', 'Drop Table', 'Default View', 'Create DataBase', 'Create Table']
+	global buttons,create_button
+	functions = [delete_row_popup, add_new_row, drop_table_popup,drop_db_popup, return_to_default, create_database, create_table]
+	texts = ['Delete Row', 'Add New Row', 'Drop Table', 'Drop DataBase', 'Default View', 'Create DataBase', 'Create Table']
 	i = 1
-	disable_buttons = ['Delete Row', 'Add New Row', 'Drop DataBase', 'Drop Table']
 	for text, func in zip(texts, functions):
 		btn = ButtonCustom(text, func, i, frame=buttons_frame)
-		if(text in disable_buttons):
-			buttons.append(btn)
+		buttons.append(btn)
 		i += 1
 
 if __name__ == "__main__":
