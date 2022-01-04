@@ -20,6 +20,7 @@ selected_row_id = None
 selected_cell = None
 db_dropped = False
 total_tables = 0
+deleted_counter = 0
 
 #Buttons
 buttons = []
@@ -221,14 +222,13 @@ def update_cell_value(entries: dict) -> None:
 	clear_edit_frame()
 	present_new_trees()
 
+
 def check_if_db_exists():
-	global deleted_counter, total_tables
-	print(deleted_counter, total_tables)
+	global total_tables
 	if deleted_counter == total_tables:
 		msg_label.config(text=err_msgs["db_dropped"], fg='#D93232', anchor=CENTER)
 		return False
 	return True
-
 
 
 def msg_decorator(func):
@@ -350,8 +350,7 @@ def import_tables() -> None:
 	"""
 		Import and insert rows of chosen table, row by row
 	"""
-	global deleted_counter,total_tables
-	deleted_counter = 0
+	global deleted_counter, total_tables
 	for x in tables_tree.get_children():
 		tables_tree.delete(x)
 
@@ -370,6 +369,9 @@ def import_tables() -> None:
 			messagebox.showerror("Error", error)
 	if deleted_counter == total_tables:
 		disable_buttons(button_disable_dict["on_table_import"])
+	if deleted_counter == 0:
+		disable_buttons(button_disable_dict['on_table_import_full'])
+		
 
 @msg_decorator
 def fill_rows(sql: str) -> None:

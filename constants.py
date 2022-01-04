@@ -37,15 +37,16 @@ button_disable_dict = {
 	"on_table_import" : ['Delete Row', 'Add New Row', 'Drop Table','Drop DataBase'],
 	"on_clear_DB" : ['Delete Row', 'Add New Row', 'Drop Table','Drop DataBase'],
 	"on_drop_table" : ['Delete Row', 'Add New Row', 'Drop Table'],
-	"on_create_DB" : ['Create DataBase'],
+	"on_create_DB" : ['Create DataBase','Create Table'],
 	"on_create_table" : ['Create Table'],
+	'on_table_import_full': ['Create DataBase', 'Create Table']
 }
 
 button_enable_dict = {
 	"on_table_select_deleted" : ['Create Table'],
 	"on_table_select_enabled" : ['Delete Row', 'Add New Row', 'Drop Table'],
 	"on_drop_table" : ['Create Table','Create DataBase'],
-	"on_create_DB" : ['Delete Row', 'Add New Row', 'Drop Table','Drop DataBase'],
+	"on_create_DB" : ['Delete Row', 'Add New Row', 'Drop Table', 'Drop DataBase'],
 	"on_create_table" : ['Delete Row', 'Add New Row', 'Drop Table','Drop DataBase'],
 	"on_clear_DB" : ['Create DataBase']
 
