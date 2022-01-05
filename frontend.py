@@ -231,22 +231,21 @@ def check_if_db_exists():
 	return True
 
 
-def msg_decorator(func):
+def msg_decorator(function_to_be_wrapped):
 	"""
 			Decorator for functions that need try, except blocks.
 			Args:
-					func (function): the function we're decorating
+					function_to_be_wrapped: the same function we wrapped with the decorator
 			Returns:
-				function
+				function that we wrapped with this decorator
 	"""
-
-	def inner_func(*args, **kwargs):
+	def wrapped_func(*args, **kwargs):
 		try:
-			return func(*args, **kwargs)
-		except Exception as e:
-			msg_label.config(text=e, fg='#D93232', anchor=CENTER)
+			return function_to_be_wrapped(*args, **kwargs)
+		except Exception as exception:
+			msg_label.config(text=exception, fg='#D93232', anchor=CENTER)
 	
-	return inner_func
+	return wrapped_func
 
 
 def on_closing():
