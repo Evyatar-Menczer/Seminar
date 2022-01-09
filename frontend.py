@@ -308,21 +308,24 @@ def select_table_row(event) -> None:
 					event (event): the event when pressing on a row in the table
 	"""
 	global selected_cell, selected_row_id
-	if rows_tree.focus() == '':
+	try:
+		if rows_tree.focus() == '':
+			return
+		if selected_cell:
+			clear_edit_frame()
+		current_item = rows_tree.item(rows_tree.focus())['values']
+		if current_item == '':
+			return
+		col = int(rows_tree.identify_column(event.x)[1:]) - 1
+		if selected_table != 'playlist_track' and selected_table != 'invoices':
+			selected_row_id = [rows_tree.column(0)["id"], current_item[0]]
+		else:
+			selected_row_id = [rows_tree.column(0)["id"], current_item[0], rows_tree.column(1)["id"], current_item[1]]
+		
+		selected_cell = [rows_tree.column(col)["id"], str(current_item[col]).replace("'", "\'").replace('"', '\"')]
+		edit_input_frame(event)
+	except:
 		return
-	if selected_cell:
-		clear_edit_frame()
-	current_item = rows_tree.item(rows_tree.focus())['values']
-	if current_item == '':
-		return
-	col = int(rows_tree.identify_column(event.x)[1:]) - 1
-	if selected_table != 'playlist_track' and selected_table != 'invoices':
-		selected_row_id = [rows_tree.column(0)["id"], current_item[0]]
-	else:
-		selected_row_id = [rows_tree.column(0)["id"], current_item[0], rows_tree.column(1)["id"], current_item[1]]
-	
-	selected_cell = [rows_tree.column(col)["id"], str(current_item[col]).replace("'", "\'").replace('"', '\"')]
-	edit_input_frame(event)
 
 
 def init_frames():
@@ -352,7 +355,7 @@ def import_tables() -> None:
 	global deleted_counter, total_tables
 	for x in tables_tree.get_children():
 		tables_tree.delete(x)
-
+	deleted_counter=0
 	all_pred_tables = controller.get_pred_table()
 	total_tables = len(all_pred_tables)
 	controller.cursor.execute(constants.ALL_TABLES_QUERY)
@@ -490,7 +493,7 @@ def present_new_trees() -> None:
 	"""
 	import_tables()
 	select_table()
-
+	
 	if selected_table_index:
 		tables_tree.selection_set(tables_tree.get_children()[selected_table_index])
 	msg_label.config(text='')
@@ -560,7 +563,7 @@ def insert_new_row_to_table(entries: dict, close_frame) -> None:
 	for column, entry in entries.items():
 		columns.append(column)
 		values.append(entry())
-	remove_indexes = [index for index, value in enumerate(values) if value == '']
+	# remove_indexes = [index for index, value in enumerate(values) if value == '']
 	for index, column in enumerate(columns):
 		if controller.check_if_quotes_needed(selected_table, column):
 			values[index] = f'"{values[index]}"'
@@ -580,12 +583,17 @@ def create_database() -> None:
 		After the database (or a specific table) has been dropped, enables the user to create the database (or table)
 		from scratch
 	"""
-	all_pred_tables = controller.get_pred_table()
-	for table in all_pred_tables:
-		controller.create_table_from_csv(table)
-	present_new_trees()
-	disable_buttons(button_disable_dict["on_create_DB"])
-	enable_buttons(button_enable_dict["on_create_DB"])
+	try:
+		global deleted_counter
+		all_pred_tables = controller.get_pred_table()
+		for table in all_pred_tables:
+			controller.create_table_from_csv(table)
+		present_new_trees()
+		disable_buttons(button_disable_dict["on_create_DB"])
+		enable_buttons(button_enable_dict["on_create_DB"])
+		deleted_counter = 0
+	except:
+		return
 	
 
 def create_table():
@@ -623,6 +631,7 @@ def init_buttons() -> None:
 		btn = ButtonCustom(text, func, i, frame=buttons_frame)
 		buttons.append(btn)
 		i += 1
+
 
 if __name__ == "__main__":
 	init_frames()

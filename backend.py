@@ -203,6 +203,7 @@ class DataController:
 	def load_database(self):
 		self.__init__('./chinook.db')
 
+
 if __name__ == "__main__":
 	data_base = DataController(constants.DATA_BASE)
 	data_base.stop_connection()
